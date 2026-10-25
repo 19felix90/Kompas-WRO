@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#112d3b">
+  <meta name="description" content="Kompas WRO: ucz się topografii Wrocławia na rzeczywistej mapie, losuj osiedla, ulice, skrzyżowania i punkty charakterystyczne.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Kompas WRO">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css?v=0.2.1">
+  <title>Kompas WRO — odkrywaj Wrocław</title>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><div class="brand-icon" aria-hidden="true"><svg width="31" height="31" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="15" stroke="currentColor" stroke-width="1.5" opacity=".65"/><path d="m25.5 10.5-4.3 10.7-10.7 4.3 4.3-10.7 10.7-4.3Z" fill="#36d2b1" stroke="#fff" stroke-width="1.5"/><circle cx="18" cy="18" r="2.2" fill="#102d3c"/></svg></div><div><span class="brand-name">KOMPAS <strong>WRO</strong></span><small>POZNAJ SWOJE MIASTO</small></div></div>
+    <div class="topbar-right"><span class="topbar-sub">Twoja osobista mapa Wrocławia</span><div class="online-indicator"><span id="connectionDot" class="dot"></span><span id="connectionLabel">Mapa online</span></div></div>
+  </header>
+  <main class="shell">
+    <aside class="sidebar" aria-label="Panel treningu">
+      <div class="intro-block"><div class="overline">POZNAWAJ. ODKRYWAJ. ZAPAMIĘTUJ.</div><h1>Wrocław,<br><em>który znasz na pamięć.</em></h1><p>Losuj miejsca, zobacz je na prawdziwej mapie, a potem sprawdź, ile już potrafisz rozpoznać.</p></div>
+      <div class="panel-section">
+        <div class="section-heading"><span>01 / CZEGO SIĘ UCZYMY?</span><span id="datasetCount" class="subtle-count">Wczytywanie...</span></div>
+        <div class="categories" role="group" aria-label="Tematy treningu">
+          <button type="button" class="category category-mix active" data-mode="mixed" aria-pressed="true"><span class="category-icon">✦</span><span>Wszystko — losowo</span><span class="category-tag">MIX</span></button>
+          <div class="category-grid">
+            <button class="category" type="button" data-mode="districts" aria-pressed="false"><span class="category-icon">◎</span><span>Osiedla</span></button>
+            <button class="category" type="button" data-mode="streets" aria-pressed="false"><span class="category-icon">≋</span><span>Ulice</span></button>
+            <button class="category" type="button" data-mode="crossings" aria-pressed="false"><span class="category-icon">✣</span><span>Skrzyżowania</span></button>
+            <button class="category" type="button" data-mode="landmarks" aria-pressed="false"><span class="category-icon">☆</span><span>Punkty</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="panel-section session-section">
+        <div class="section-heading"><span>02 / JAK SIĘ UCZYMY?</span></div>
+        <div class="segmented" role="group" aria-label="Tryb nauki">
+          <button id="learnTab" type="button" class="seg-btn active" aria-pressed="true">Odkrywaj i ucz się</button>
+          <button id="quizTab" type="button" class="seg-btn" aria-pressed="false">Sprawdź się</button>
+        </div>
+        <div class="settings">
+          <div class="field"><label for="zoneSelect">Część Wrocławia</label><select id="zoneSelect">
+            <option value="all">Całe miasto</option><option value="center">Centrum</option><option value="west">Zachód</option>
+            <option value="east">Wschód</option><option value="north">Północ</option><option value="south">Południe</option>
+          </select></div>
+          <div class="field" id="difficultyWrapper" hidden><label for="difficultySelect">Dokładność</label><select id="difficultySelect"><option value="easy">Początkujący</option><option value="medium" selected>Średni</option><option value="hard">Ekspert</option></select></div>
+        </div>
+      </div>
+      <section id="learnPanel" class="learn-card" aria-label="Losowanie i wyszukiwanie">
+        <span class="learn-eyebrow">TRYB NAUKI</span>
+        <div class="learn-title">Odkryj kolejne miejsce</div>
+        <p>Losowanie od razu podświetla miejsce na mapie i pokazuje jego nazwę. Obok możesz otworzyć widok ulicy.</p>
+        <button id="randomBtn" class="button button-primary random-button" type="button"><span aria-hidden="true">↻</span> Losuj następne miejsce <span aria-hidden="true">→</span></button>
+        <div class="search-divider"><span>albo znajdź konkretne miejsce</span></div>
+        <label for="searchInput" class="search-label">Wyszukiwanie</label>
+        <input id="searchInput" type="search" placeholder="Nazwa ulicy, osiedla, mostu..." autocomplete="off">
+        <div id="learnList" class="learn-list" aria-label="Wyszukane miejsca" hidden></div>
+      </section>
+      <section id="quizPanel" class="question-card" hidden aria-label="Pytanie quizu" aria-live="polite">
+        <div class="question-kicker"><span class="question-number" id="questionNumber">PYTANIE 01</span><span id="questionCategory">OSIEDLA</span></div>
+        <h2 id="questionTitle">Gdzie jest to miejsce?</h2>
+        <p id="questionInstruction">Wskaż je na mapie.</p>
+        <div id="feedback" class="feedback" hidden></div>
+        <div class="question-actions"><button id="revealBtn" class="button button-light" type="button">Pokaż odpowiedź</button><button id="nextBtn" class="button button-primary" type="button" disabled>Następne →</button></div>
+      </section>
+      <div class="stats-strip" aria-label="Statystyki quizu"><div><strong id="statAnswered">0</strong><span>prób</span></div><div><strong id="statAccuracy">0%</strong><span>trafność</span></div><div><strong id="statStreak">0</strong><span>seria</span></div></div>
+      <div class="sidebar-bottom">
+        <div id="dataStatus" class="status-line" role="status">Uruchamianie zestawu startowego...</div>
+        <button id="retryBtn" type="button" class="small-action">Odśwież dokładne dane miejskie</button>
+        <button id="resetBtn" type="button" class="small-action secondary">Wyzeruj postępy</button>
+      </div>
+    </aside>
+    <section class="map-area" aria-label="Mapa Wrocławia">
+      <div id="map" class="map"></div>
+      <div class="map-top-bar"><div class="map-pill"><span class="pulse"></span><span id="mapModeLabel">PRAWDZIWA MAPA WROCŁAWIA</span></div><div class="map-top-tools"><button id="mapRandomBtn" type="button" class="map-random-btn" title="Losuj następne miejsce">↻ Losuj</button><button id="mapHomeBtn" type="button" class="map-tool" title="Pokaż całe miasto" aria-label="Pokaż cały wybrany obszar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/><path d="M9 21v-8h6v8"/></svg></button></div></div>
+      <div id="mapHelp" class="map-help">Nauka: losuj miejsca i obserwuj ich położenie.</div>
+      <div class="map-bottom-actions"><button id="labelsToggle" type="button" class="map-bottom-btn" aria-pressed="true">◉ Ukryj podpisy</button><div class="map-source-note">Granice i ulice: <a href="https://geoportal.wroclaw.pl/zasoby/" target="_blank" rel="noopener">SIP Wrocław</a> · Mapa: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OSM</a></div></div>
+      <div id="mapLoadOverlay" class="map-load" hidden><div class="loader"></div><span id="mapLoadText">Ładowanie mapy...</span></div>
+    </section>
+    <aside class="photo-panel" aria-label="Szczegóły miejsca i Google Street View">
+      <div class="spot-header"><span class="spot-eyebrow">ODKRYTE MIEJSCE</span><span id="spotCategory" class="spot-category">WROCŁAW</span></div>
+      <h2 id="spotName">Wrocław czeka na odkrycie</h2>
+      <p id="spotDescription" class="spot-description">Wybierz kategorię i kliknij „Losuj następne miejsce”.</p>
+      <div class="photo-head"><span>Google Street View</span><span class="photo-head-icon">360°</span></div>
+      <div class="photo-view" id="photoView">
+        <div class="photo-fallback" id="photoFallback">
+          <div class="photo-fallback-symbol" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="36" stroke="currentColor" stroke-width="1.7" stroke-dasharray="4 5"/><path d="M20 70 38 49l13 13 24-31 9 12" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="38" cy="35" r="6" stroke="currentColor" stroke-width="2.1"/><path d="M50 12v11M50 77v11M12 50h11M77 50h11" stroke="currentColor" stroke-width="2"/></svg></div>
+          <strong id="photoFallbackTitle">Zobacz to miejsce z ulicy</strong>
+          <span id="photoFallbackText">Przejdź do panoramy Google lub włącz podgląd bezpośrednio w aplikacji.</span>
+        </div>
+        <iframe id="streetViewFrame" title="Panorama Google Street View" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen hidden></iframe>
+      </div>
+      <a id="streetViewLink" class="street-link" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer" aria-disabled="true">Otwórz w Google Street View ↗</a>
+      <div id="spotLocation" class="spot-location">Położenie pojawi się tutaj.</div>
+      <details class="api-settings" id="apiSettings"><summary>Wyświetlaj Street View bezpośrednio tutaj</summary><p>Google wymaga bezpłatnego dla samego wyświetlania klucza <strong>Maps Embed API</strong> i konta rozliczeniowego Google Cloud. Bez klucza działa przycisk otwierający panoramę w Mapach Google.</p>
+        <label for="apiKeyInput">Twój klucz Maps Embed API</label>
+        <form id="apiKeyForm" class="api-key-form"><input id="apiKeyInput" type="password" placeholder="Wklej własny klucz API" autocomplete="off" spellcheck="false"><button type="submit">Zapisz</button></form>
+        <button id="apiKeyClear" type="button" class="small-action secondary">Usuń klucz</button>
+        <p class="api-note">Klucz zapisuje się tylko w przeglądarce. Ogranicz go do Maps Embed API i domeny aplikacji. <a href="https://developers.google.com/maps/documentation/embed/quickstart" target="_blank" rel="noopener">Instrukcja Google ↗</a></p>
+      </details>
+      <div class="spot-footer">Nowe miejsca są losowane bez powtarzania ostatnich odpowiedzi.</div>
+    </aside>
+  </main>
+  <footer class="footer"><span>Kompas WRO · 0.2.1 beta</span><span>Oficjalne ulice i osiedla: SIP Wrocław · Zestaw startowy dostępny także przy awarii źródeł danych.</span></footer>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data/starter.js?v=0.2.1"></script>
+<script src="app.js?v=0.2.1"></script>
+</body>
+</html>
