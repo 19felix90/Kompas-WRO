@@ -1,4 +1,4 @@
-/* Kompas WRO 0.2 — user-facing app, no build step required. */
+/* Kompas WRO 0.2.2 — vector basemap without labels for geography quizzes. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -13,6 +13,10 @@
   };
   const CATS = {districts:'OSIEDLE',streets:'ULICA',crossings:'SKRZYŻOWANIE',landmarks:'PUNKT'};
   const GIS_ROOT = 'https://gis.um.wroc.pl/portal_srv/rest/services/search/MapServer';
+  // Free, keyless vector basemap: unlike raster OSM tiles, labels can be disabled
+  // independently of detailed roads, buildings, rivers and land use.
+  const QUIZ_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+  const QUIZ_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · <a href="https://openfreemap.org/">OpenFreeMap</a>';
   const PREFS_KEY = 'kompas-wro-pref-v02';
   const PROGRESS_KEY = 'kompas-wro-progress-v1'; // honor results from original version
   const CACHE_MAX_AGE = 7*24*60*60*1000;
@@ -28,6 +32,7 @@
     progress:localRead(PROGRESS_KEY,{entries:{},answered:0,correct:0,streak:0})
   };
   let map=null, tiles=null, baseLayer=null, answerLayer=null, dbPromise=null;
+  let vectorTiles=null, vectorAttempt=0, fallbackRoadLayer=null;
   const memoryCache=new Map();
 
   function localRead(k,fallback) {try{const txt=localStorage.getItem(k);return txt?JSON.parse(txt):fallback;}catch(_){return fallback;}}
@@ -82,6 +87,9 @@
     const cs=Object.keys(CATS).map(cat=>state.sources[cat].length).join('/');
     if(!state.syncing)status('Baza: osiedla / ulice / skrzyżowania / punkty: '+cs+'. '+(state.officialStreets?'Ulice SIP wczytane.':'Dane startowe gotowe.'));
     renderLearnList();renderBaseLayer();
+    if(fallbackRoadLayer&&state.kind==='quiz'&&!state.showLabels){
+      streetsOnlyFallback('Tryb zapasowy — OpenFreeMap niedostępny.');
+    }
     // Promote a starter pin to the exact GIS geometry as soon as it arrives.
     if(state.kind==='learn'&&state.selected&&state.selected.source==='starter'){
       const upgraded=state.items.find(item=>item.key===state.selected.key&&item.source!=='starter');
@@ -128,21 +136,111 @@
     map.on('click',e=>{if(state.kind==='quiz'&&!state.answered&&state.current)submitGuess(e.latlng);});
     state.mapReady=true;presentation();renderBaseLayer();
   }
+  // Switch *basemap tiles*, not CSS filters. Blurring a raster map also
+  // destroys the road grid, making a precise street/crossing quiz impossible.
+  function clearVectorBasemap() {
+    vectorAttempt++;
+    if(vectorTiles){
+      if(map.hasLayer(vectorTiles))map.removeLayer(vectorTiles);
+      vectorTiles=null;
+    }
+    if(fallbackRoadLayer){
+      if(map.hasLayer(fallbackRoadLayer))map.removeLayer(fallbackRoadLayer);
+      fallbackRoadLayer=null;
+    }
+  }
+  function streetsOnlyFallback(message) {
+    // If the free vector service or WebGL is unavailable, show the actual SIP
+    // street axes without names rather than blurring the normal raster map.
+    clearVectorBasemap();
+    if(map.hasLayer(tiles))map.removeLayer(tiles);
+    const streets=state.sources.streets.filter(item=>item.segments?.length);
+    if(streets.length){
+      fallbackRoadLayer=L.layerGroup().addTo(map);
+      const painter=L.canvas({padding:.25});
+      for(const road of streets){
+        L.polyline(road.segments,{renderer:painter,interactive:false,
+          color:road.length>3500?'#92a9b5':'#b2c1c8',
+          weight:road.length>3500?2.8:1.8,opacity:.9}).addTo(fallbackRoadLayer);
+      }
+      setText('mapHelp',message+' Pokazano dokładne osie ulic SIP bez nazw.');
+    }else{
+      tiles.addTo(map);
+      setText('mapHelp',message+' Tymczasowo widać mapę z nazwami.');
+    }
+  }
+  function syncBasemap() {
+    if(!map)return;
+    const anonymous=state.kind==='quiz'&&!state.showLabels;
+    if(!anonymous){
+      clearVectorBasemap();
+      if(!map.hasLayer(tiles))tiles.addTo(map);
+      return;
+    }
+    if(vectorTiles&&map.hasLayer(vectorTiles))return;
+    if(fallbackRoadLayer&&map.hasLayer(fallbackRoadLayer))return;
+    if(typeof window.maplibregl==='undefined'||typeof L.maplibreGL!=='function'||
+       (typeof window.maplibregl.supported==='function'&&!window.maplibregl.supported())){
+      streetsOnlyFallback('Mapa wektorowa jest niedostępna.');return;
+    }
+    const attempt=++vectorAttempt;
+    let layer,gl;
+    try{
+      layer=L.maplibreGL({style:QUIZ_STYLE_URL,interactive:false,attribution:QUIZ_ATTRIBUTION}).addTo(map);
+      vectorTiles=layer;
+      const surface=layer.getContainer();
+      if(surface){surface.style.visibility='hidden';surface.style.pointerEvents='none';}
+      gl=layer.getMaplibreMap();
+      if(!gl)throw Error('Brak obiektu MapLibre po utworzeniu warstwy');
+      let done=false;
+      const valid=()=>attempt===vectorAttempt&&state.kind==='quiz'&&!state.showLabels&&vectorTiles===layer;
+      const removeLabels=()=>{
+        if(!valid())return;
+        const style=gl.getStyle();
+        for(const entry of style?.layers||[]){
+          // All symbol layers include road/place names, text icons and road shields.
+          if(entry.type==='symbol'&&gl.getLayoutProperty(entry.id,'visibility')!=='none')
+            gl.setLayoutProperty(entry.id,'visibility','none');
+        }
+      };
+      const ready=()=>{
+        if(!valid()||done)return;
+        removeLabels();done=true;
+        if(surface)surface.style.visibility='visible';
+        if(map.hasLayer(tiles))map.removeLayer(tiles);
+        if(fallbackRoadLayer){map.removeLayer(fallbackRoadLayer);fallbackRoadLayer=null;}
+        setText('mapHelp','Pełna mapa ulic bez nazw. Przybliż widok i kliknij wybrane miejsce.');
+      };
+      gl.on('styledata',removeLabels);
+      gl.on('load',ready);
+      // Don't let a provider outage leave a blank map permanently.
+      window.setTimeout(()=>{
+        if(valid()&&!done)streetsOnlyFallback('Nie udało się wczytać mapy OpenFreeMap.');
+      },16000);
+      if(gl.loaded())ready();
+    }catch(error){
+      console.warn('Mapa wektorowa bez nazw:',error);
+      streetsOnlyFallback('Nie udało się uruchomić mapy wektorowej.');
+    }
+  }
   function presentation() {
     const hidden=state.kind==='quiz'&&!state.showLabels;
     $('map').parentElement.classList.toggle('quiz-map',hidden);
-    $('labelsToggle').setAttribute('aria-pressed',String(!hidden));setText('labelsToggle',hidden?'◎ Pokaż podpisy':'◉ Ukryj podpisy');
-    setText('mapModeLabel',hidden?'QUIZ · MAPA BEZ NAZW':'NAUKA · ODKRYWAJ MIASTO');
+    $('labelsToggle').setAttribute('aria-pressed',String(!hidden));
+    setText('labelsToggle',hidden?'◎ Pokaż nazwy':'◉ Ukryj nazwy');
+    setText('mapModeLabel',hidden?'QUIZ · SZCZEGÓŁOWA MAPA BEZ NAZW':state.kind==='quiz'?'QUIZ · MAPA Z NAZWAMI':'NAUKA · ODKRYWAJ MIASTO');
     $('learnTab').classList.toggle('active',state.kind==='learn');$('quizTab').classList.toggle('active',state.kind==='quiz');
     $('learnTab').setAttribute('aria-pressed',String(state.kind==='learn'));$('quizTab').setAttribute('aria-pressed',String(state.kind==='quiz'));
     $('quizPanel').hidden=state.kind!=='quiz';$('learnPanel').hidden=state.kind!=='learn';
     $('difficultyWrapper').hidden=state.kind!=='quiz';
     $('mapRandomBtn').hidden=state.kind!=='learn';
+    syncBasemap();
   }
   function renderBaseLayer() {
     if(!baseLayer)return;baseLayer.clearLayers();
-    if(state.kind==='quiz'){
-      // Outline districts in quiz to give geographical context without revealing names.
+    if(state.kind==='quiz'&&(state.mode==='districts'||state.mode==='mixed'&&state.current?.cat==='districts')){
+      // Show district outlines only on district questions; they obstruct street
+      // intersections in other quiz categories.
       for(const d of state.sources.districts){if(!d.geometry||!itemFitsZone(d))continue;
         L.geoJSON(d.geometry,{style:{color:'#a2b9bc',weight:1.1,fillColor:'#79caba',fillOpacity:.035},interactive:false}).addTo(baseLayer);
       }
@@ -199,9 +297,10 @@
     setText('questionCategory',CATS[item.cat]);
     const questions={districts:'Gdzie znajduje się osiedle '+item.name+'?',streets:'Gdzie przebiega '+item.name+'?',crossings:'Gdzie krzyżują się '+(item.roads?.join(' i ')||item.name)+'?',landmarks:'Gdzie znajduje się '+item.name+'?'};
     setText('questionTitle',questions[item.cat]);
-    setText('questionInstruction',item.cat==='districts'?'Wskaż punkt na obszarze osiedla.':'Przybliż mapę i wskaż lokalizację.');
+    setText('questionInstruction',item.cat==='districts'?'Wskaż punkt na obszarze osiedla.':'Na szczegółowej mapie bez nazw przybliż ulice i wskaż lokalizację.');
     $('nextBtn').disabled=true;$('revealBtn').disabled=false;
-    setText('mapHelp','Dotknij mapy, aby wskazać odpowiedź.');home();
+    renderBaseLayer();
+    setText('mapHelp','Przybliż mapę ulic bez nazw i dotknij miejsca odpowiedzi.');home();
   }
   function getTolerance(item) {
     const tol={easy:{districts:1800,streets:750,crossings:650,landmarks:650},medium:{districts:1000,streets:420,crossings:330,landmarks:320},hard:{districts:470,streets:170,crossings:160,landmarks:140}};
@@ -399,7 +498,7 @@
   function start() {
     initializeStarter();bindUI();initializeMap();updateStats();setConnection();presentation();
     randomLearn();synchronizeData(false);
-    if('serviceWorker' in navigator && location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    if('serviceWorker' in navigator && location.protocol==='https:')navigator.serviceWorker.register('./sw.js?v=0.2.2').catch(()=>{});
     window.KompasWroTest={state,haversine,distanceToSegment,nearestLine,pointInRing,pointInGeometry,polygonDistance,normalizeDistricts,normalizeCityRoads,buildCrossings,googleStreetURL,googleEmbedURL,chooseItem,setMode,setKind,randomLearn,submitGuess,nextQuestion};
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();

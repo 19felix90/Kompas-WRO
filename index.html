@@ -12,7 +12,8 @@
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css?v=0.2.1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="styles.css?v=0.2.2">
   <title>Kompas WRO — odkrywaj Wrocław</title>
 </head>
 <body>
@@ -78,7 +79,7 @@
       <div id="map" class="map"></div>
       <div class="map-top-bar"><div class="map-pill"><span class="pulse"></span><span id="mapModeLabel">PRAWDZIWA MAPA WROCŁAWIA</span></div><div class="map-top-tools"><button id="mapRandomBtn" type="button" class="map-random-btn" title="Losuj następne miejsce">↻ Losuj</button><button id="mapHomeBtn" type="button" class="map-tool" title="Pokaż całe miasto" aria-label="Pokaż cały wybrany obszar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/><path d="M9 21v-8h6v8"/></svg></button></div></div>
       <div id="mapHelp" class="map-help">Nauka: losuj miejsca i obserwuj ich położenie.</div>
-      <div class="map-bottom-actions"><button id="labelsToggle" type="button" class="map-bottom-btn" aria-pressed="true">◉ Ukryj podpisy</button><div class="map-source-note">Granice i ulice: <a href="https://geoportal.wroclaw.pl/zasoby/" target="_blank" rel="noopener">SIP Wrocław</a> · Mapa: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OSM</a></div></div>
+      <div class="map-bottom-actions"><button id="labelsToggle" type="button" class="map-bottom-btn" aria-pressed="true">◉ Ukryj nazwy</button><div class="map-source-note">Granice i ulice: <a href="https://geoportal.wroclaw.pl/zasoby/" target="_blank" rel="noopener">SIP Wrocław</a> · Mapa: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OSM</a> / <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a></div></div>
       <div id="mapLoadOverlay" class="map-load" hidden><div class="loader"></div><span id="mapLoadText">Ładowanie mapy...</span></div>
     </section>
     <aside class="photo-panel" aria-label="Szczegóły miejsca i Google Street View">
@@ -105,10 +106,12 @@
       <div class="spot-footer">Nowe miejsca są losowane bez powtarzania ostatnich odpowiedzi.</div>
     </aside>
   </main>
-  <footer class="footer"><span>Kompas WRO · 0.2.1 beta</span><span>Oficjalne ulice i osiedla: SIP Wrocław · Zestaw startowy dostępny także przy awarii źródeł danych.</span></footer>
+  <footer class="footer"><span>Kompas WRO · 0.2.2 beta</span><span>Oficjalne ulice i osiedla: SIP Wrocław · Zestaw startowy dostępny także przy awarii źródeł danych.</span></footer>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="data/starter.js?v=0.2.1"></script>
-<script src="app.js?v=0.2.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
+<script src="data/starter.js?v=0.2.2"></script>
+<script src="app.js?v=0.2.2"></script>
 </body>
 </html>

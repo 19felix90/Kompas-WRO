@@ -1,5 +1,5 @@
 /* App assets only. OSM map tiles and Google images are never cached by this worker. */
-const SHELL='kompas-wro-shell-0.2.1';
+const SHELL='kompas-wro-shell-0.2.2';
 const FILES=['./','./index.html','./styles.css','./app.js','./data/starter.js','./manifest.webmanifest','./assets/icon.svg','./assets/apple-touch-icon.png','./assets/icon-192.png','./assets/icon-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(SHELL).then(cache=>cache.addAll(FILES)));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('kompas-wro-shell-')&&key!==SHELL).map(key=>caches.delete(key)))));self.clients.claim();});
