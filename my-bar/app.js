@@ -146,7 +146,7 @@ let ui={page:'home',filter:'all',base:'any',taste:'any',query:'',sort:'fit',moda
 const ONLINE=new Map();
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){toast('Nie udało się zapisać danych w tej przeglądarce');}}
 function freshId(){return 'p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);}
-function getAlternativeKeys(k){return ({rum:['rum','white_rum','dark_rum','spiced_rum'],whiskey:['whiskey','bourbon','rye_whiskey','irish_whiskey'],lime_juice:['lime_juice','lime'],lemon_juice:['lemon_juice','lemon'],orange_juice:['orange_juice','orange'],honey:['honey'],prosecco:['prosecco']})[k]||[k];}
+function getAlternativeKeys(k){return ({rum:['rum','white_rum','dark_rum','spiced_rum','infused_rum'],whiskey:['whiskey','bourbon','rye_whiskey','irish_whiskey'],lime_juice:['lime_juice','lime'],lemon_juice:['lemon_juice','lemon'],orange_juice:['orange_juice','orange'],honey:['honey'],prosecco:['prosecco']})[k]||[k];}
 function availableAmount(ing){
   const options=getAlternativeKeys(ing.id);
   const items=state.stock.filter(s=>options.includes(s.key));

@@ -98,6 +98,12 @@ function classifyExternalProduct(name,categories=''){
   check(/\b(rum|rhum|ron)\b/)&&check(/\b(liqueur|liqueurs|liqueure|likier|licor)\b/))
   return {key:'rum_liqueur',confidence:'type'};
  if(check(/\b(vegan cream liqueur|plant based cream liqueur|weganski likier kremowy)\b/))return {key:'plant_cream_liqueur',confidence:'type'};
+ // Rum rzeczywiście infuzowany owocami, a nie rum opisany nutą ananasa w smaku.
+ // Sprawdzamy nazwę trunku; kategoria likieru rumowego ma pierwszeństwo.
+ if(/\b(rum|rums|ron|rhum)\b/.test(n)&&
+   /\b(pineapple|ananas|ananasowy|infused|infuzowany|fruit infused)\b/.test(n)&&
+   !/\b(liqueur|likier|licor|syrup|syrop|juice|sok|cocktail)\b/.test(n))
+   return {key:'infused_rum',confidence:'type'};
  if(check(/\b(vermouth|wermut|vermut)\b/)){
    if(check(/\b(rosso|rouge|sweet|red|czerwony|slodki)\b/))return {key:'sweet_vermouth',confidence:'type'};
    if(check(/\b(bianco|blanc|white|bialy)\b/))return {key:'white_vermouth',confidence:'type'};

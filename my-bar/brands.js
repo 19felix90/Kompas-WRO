@@ -97,7 +97,26 @@ PRODUCT_BRANDS.push(
  {key:'white_rum',name:'Santa Teresa White Rum',
   aliases:['Santa Teresa Blanco','Ron Santa Teresa Blanco']}
 );
+// Plantation zostało przemianowane na Planteray — zawartość Stiggins' Fancy Pineapple
+// się nie zmieniła. Produkt to rum z infuzją ananasa (40%), nie likier ani syrop.
+PRODUCT_BRANDS.push({
+ key:'infused_rum',
+ name:'Planteray Stiggins’ Fancy Pineapple Rum',
+ aliases:[
+  'Plantation Pineapple','Plantation Pineapple Rum','Rum Plantation Pineapple',
+  'Plantation Stiggins Fancy Pineapple','Plantation Stiggins’ Fancy Pineapple',
+  "Plantation Stiggins' Fancy Pineapple", "Plantation Stiggins' Fancy Pineapple Rum",
+  'Plantation Pineapple Stiggins Fancy','Plantation Pineapple Stiggins Fancy Original Dark',
+  'Planteray Pineapple','Planteray Pineapple Rum','Planteray Stiggins Fancy',
+  'Planteray Stiggins Fancy Pineapple','Planteray Stiggins Fancy Pineapple Rum',
+  'Planteray Pineapple Stiggins Fancy','Planteray Rum Pineapple',
+  'Stiggins Fancy Pineapple Rum','Stiggins Pineapple Rum',
+  'Rum ananasowy Plantation','Rum ananasowy Planteray'
+ ]
+});
 const AMBIGUOUS_BRANDS=[
+ ['plantation','Plantation / Planteray ma białe, ciemne i infuzowane rumy — dopisz wariant.'],
+ ['planteray','Planteray (dawniej Plantation) ma różne rumy — dopisz wariant.'],
  ['santa teresa','Santa Teresa ma rumy i likier pomarańczowy Rhum Orange — wybierz wariant.'],
  ['santa theresa','Poprawna nazwa marki to Santa Teresa; wybierz wariant.'],
  ['amarula','Amarula oferuje likier śmietankowy i gin — wybierz konkretny wariant.'],

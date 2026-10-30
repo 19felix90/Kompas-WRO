@@ -45,3 +45,10 @@ Wpisz „rhum orange santa theresa” lub „Santa Teresa Rhum Orange”, aby zn
 - https://www.thewhiskyexchange.com/p/7138/santa-teresa-rhum-orange-liqueur
 
 API produktów: https://www.drinkdb.site/api.php oraz https://world.openfoodfacts.org/
+
+
+### My Bar 1.3.2 — Plantation / Planteray Stiggins’ Fancy Pineapple
+- Produkt oznaczony jako „Rum infuzowany / owocowy” (`infused_rum`), z zachowaniem nazwy konkretnej butelki. To rum infuzowany ananasem, nie sok ananasowy ani likier.
+- Wyszukiwanie akceptuje zarówno starą markę **Plantation** (np. „plantation pineapple”), jak i nową **Planteray** (np. „Planteray Stiggins Fancy Pineapple”). Propozycje wskazują ten sam produkt.
+- Rum infuzowany może zaspokajać wymóg „rum (dowolny)”, ale nie wymóg konkretnego rumu białego czy ciemnego, gdyż wpłynąłby na profil smakowy klasycznej receptury.
+- Źródło: https://planterayrum.com/product/stiggins-fancy-pineapple/ (producent). Przedstawiciel w Polsce: https://www.unitedbeverages.pl/upload/infolog/karta-produktow-planteray-stiging-pineapple.pdf

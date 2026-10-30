@@ -27,6 +27,7 @@ const INGREDIENTS = [
   {id:'creme_de_mure',name:'Likier jeżynowy',en:'Blackberry liqueur',type:'alcohol',aliases:['creme de mure','blackberry liqueur','likier jezynowy']},
 
   {id:'white_vermouth',name:'Wermut biały (bianco)',en:'Bianco vermouth',type:'alcohol',aliases:['vermouth bianco','martini bianco']},
+  {id:'infused_rum',name:'Rum infuzowany / owocowy',en:'Fruit-infused rum',type:'alcohol',aliases:['infused rum','fruit infused rum','pineapple infused rum','rum infuzowany','rum macerowany','rum ananasowy','pineapple rum','rum owocowy']},
   {id:'spiced_rum',name:'Rum korzenny (spiced)',en:'Spiced rum',type:'alcohol',aliases:['spiced rum','rum korzenny']},
   {id:'flavored_vodka',name:'Wódka smakowa',en:'Flavored vodka',type:'alcohol',aliases:['flavored vodka','wodka smakowa']},
   {id:'flavored_gin',name:'Gin smakowy',en:'Flavored gin',type:'alcohol',aliases:['flavored gin','gin smakowy']},
