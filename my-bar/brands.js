@@ -51,8 +51,16 @@ const PRODUCT_BRAND_GROUPS=[
  ['cola',["Coca-Cola","Coca Cola","Pepsi","Pepsi Max"]],
  ['soda',["Schweppes Soda Water","Fever-Tree Soda Water","Kinley Soda Water"]]
 ];
+// Warianty Botucal = rynkowa nazwa rodziny rumów Diplomático.
+// Planas jest białym rumem, pozostałe wymienione warianty są dojrzewające.
+PRODUCT_BRAND_GROUPS.push(
+ ['white_rum',['Botucal Planas','Botucal Planas Rum','Botucal Planas 47%','Diplomático Planas','Diplomatico Planas']],
+ ['dark_rum',['Botucal Reserva Exclusiva','Botucal Reserva Exlusiva','Botucal Reserva','Botucal Mantuano','Botucal Selección de Familia','Botucal Seleccion de Familia','Botucal Single Vintage','Botucal No.1 Batch Kettle','Botucal No.2 Barbet','Botucal No.3 Pot Still','Diplomático Mantuano','Diplomatico Mantuano','Diplomático Reserva Exclusiva']]
+);
 const PRODUCT_BRANDS=PRODUCT_BRAND_GROUPS.flatMap(([key,names])=>names.map(name=>({key,name})));
 const AMBIGUOUS_BRANDS=[
+ ['botucal','Botucal ma różne rumy: Planas (biały), Mantuano i Reserva Exclusiva (dojrzewające). Wybierz wariant z podpowiedzi.'],
+ ['diplomatico','Diplomático ma różne warianty rumu. Wybierz konkretną butelkę z podpowiedzi.'],
  ['martini','Marka Martini ma różne wermuty i wina musujące — dopisz wariant.'],
  ['cinzano','Marka Cinzano ma wermuty i wina musujące — dopisz wariant.'],
  ['bacardi','Bacardi ma biały, ciemny i korzenny rum — dopisz wariant.'],
