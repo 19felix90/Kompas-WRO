@@ -32,3 +32,16 @@ W katalogu Ron Compañero Extra Añejo Panama 54% jest rumem ciemnym/dojrzewają
 - Warianty Amarula: https://sklep-domwhisky.pl/firm-pol-1672244484-Amarula.html
 - Compañero: https://www.roncompanero.com/
 - Compañero Extra Añejo Panama: https://sklep-domwhisky.pl/product-pol-35314-Rum-Companero-Extra-Anejo-Panama-54-0-7l.html
+
+
+### My Bar 1.3 — katalogi alkoholi
+Po wpisaniu przynajmniej czterech znaków i chwili bez pisania aplikacja przeszukuje otwarte katalogi **DrinkDB** (bez klucza) i **Open Food Facts** (Search-a-licious). Kiedy jest zbyt mało wyników, próbuje również starszego API wyszukiwania Open Food Facts oraz **Wikidata**. Bazy różnią się zasięgiem, ograniczeniami zapytań i obsługą CORS — dostępność i kompletność nie są gwarantowane. Lokalny katalog działa offline. Nie wysyłamy do wyszukiwarek zawartości barku, tylko wpisaną nazwę produktu; aplikacja pokazuje źródło każdej propozycji.
+
+Wpisz „rhum orange santa theresa” lub „Santa Teresa Rhum Orange”, aby znaleźć **Santa Teresa Rhum Orange Liqueur** (40%): likier pomarańczowy na bazie rumu, *nie* czysty rum. Wpisy z niepełnymi lub niepewnymi metadanymi wymagają ręcznego potwierdzenia rodzaju. Poprawki użytkownika są zapamiętywane lokalnie.
+
+Źródła potwierdzające kategorię Santa Teresa:
+- https://haciendasantateresa.com.ve/en/catalogo/portfolio/
+- https://www.diffordsguide.com/beer-wine-spirits/1645/santa-teresa-rhum-orange-liqueur
+- https://www.thewhiskyexchange.com/p/7138/santa-teresa-rhum-orange-liqueur
+
+API produktów: https://www.drinkdb.site/api.php oraz https://world.openfoodfacts.org/

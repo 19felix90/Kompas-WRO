@@ -84,7 +84,22 @@ PRODUCT_BRANDS.push(
    'Compañero Elixir Orange','Companero Elixir Orange','Rum Companero Elixir Orange',
    'Compañero Orange Elixir','Ron Companero Elixir Orange']}
 );
+// Santa Teresa: Rhum Orange to likier na bazie rumu, nie zwykły rum.
+PRODUCT_BRANDS.push(
+ {key:'rum_liqueur',name:'Santa Teresa Rhum Orange Liqueur',
+  aliases:['Santa Teresa Rhum Orange','Rhum Orange Santa Teresa','Rhum Orange Santa Theresa',
+    'Rhum Orange Santa Theresa 40%','Santa Theresa Rhum Orange','Santa Teresa Orange Rum Liqueur',
+    'Rhum Orange Liqueur Santa Teresa','Licor de Naranja Santa Teresa']},
+ {key:'dark_rum',name:'Santa Teresa 1796 Rum',
+  aliases:['Ron Santa Teresa 1796','Santa Teresa 1796 Solera Rum']},
+ {key:'dark_rum',name:'Santa Teresa Gran Reserva Rum',
+  aliases:['Santa Teresa Gran Reserva','Ron Santa Teresa Gran Reserva']},
+ {key:'white_rum',name:'Santa Teresa White Rum',
+  aliases:['Santa Teresa Blanco','Ron Santa Teresa Blanco']}
+);
 const AMBIGUOUS_BRANDS=[
+ ['santa teresa','Santa Teresa ma rumy i likier pomarańczowy Rhum Orange — wybierz wariant.'],
+ ['santa theresa','Poprawna nazwa marki to Santa Teresa; wybierz wariant.'],
  ['amarula','Amarula oferuje likier śmietankowy i gin — wybierz konkretny wariant.'],
  ['companero','Compañero oferuje rumy dojrzewające i likier na bazie rumu — wybierz wariant.'],
  ['botucal','Botucal ma różne rumy: Planas (biały), Mantuano i Reserva Exclusiva (dojrzewające). Wybierz wariant z podpowiedzi.'],
