@@ -129,6 +129,8 @@ function decodeOnlineProducts(body,query){
    if(!Number.isFinite(score)&&!normalize(brand).includes(q))continue;
    const categories=[p.categories,one(p.categories_tags),one(p.categories_tags_en),p.categories_en].filter(Boolean).join(' ');
    const matched=classifyExternalProduct(name,categories);
+   const cat=normalize(categories);
+   if(!matched.key&&normalize(name)!==q&&!/\b(alcohol|alcoholic|beverage|beverages|spirits|wine|beer|rums|liquor|liqueur|cocktail|drink|vermouth|juice|syrup|soda|tonic|whisky|whiskey|gin|vodka)\b/.test(cat))continue;
    const token=normalize(name);
    if(seen.has(token))continue;seen.add(token);
    const id=productText(one(p.code)||h?.id||token,60);
