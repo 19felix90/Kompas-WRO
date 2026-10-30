@@ -38,11 +38,12 @@ function productLocalScore(query,name){
 function localProductCandidates(query){
  const q=normalize(query);if(q.length<2)return [];
  const rows=[],used=new Set();
+ const priority={'botucal reserva exclusiva':-17,'botucal planas':-16,'botucal mantuano':-15,'diplomatico reserva exclusiva':-9,'diplomatico planas':-8};
  const push=(name,key,source,rank)=>{
    const token=normalize(name);
    if(!key||!token||used.has(token+'|'+key))return;
    used.add(token+'|'+key);
-   rows.push({name,key,source,rank});
+   rows.push({name,key,source,rank:rank+(priority[token]||0)});
  };
  for(const item of PRODUCT_BRANDS){
    const score=productLocalScore(q,item.name);
@@ -63,7 +64,7 @@ function localProductCandidates(query){
 function classifyExternalProduct(name,categories=''){
  const n=normalize(name),c=normalize(categories),combined=n+' '+c;
  const local=identifyProduct(name);
- if(local.key&&!local.key.startsWith('custom:'))return {key:local.key,confidence:'catalog'};
+ if(local.key&&!local.key.startsWith('custom:')&&['brand','remembered'].includes(local.status))return {key:local.key,confidence:'catalog'};
  const check=re=>re.test(combined);
  if(check(/\b(ready to drink|premix|pre mix|mixed cocktails|gotow.+ drink)\b/))return {key:'ready_cocktail',confidence:'type'};
  if(check(/\b(vermouth|wermut|vermut)\b/)){
@@ -108,6 +109,7 @@ function classifyExternalProduct(name,categories=''){
  if(check(/\b(ginger ale)\b/))return {key:'ginger_ale',confidence:'type'};
  if(check(/\b(ginger beer)\b/))return {key:'ginger_beer',confidence:'type'};
  if(check(/\b(cola)\b/))return {key:'cola',confidence:'type'};
+ if(local.key&&!local.key.startsWith('custom:'))return {key:local.key,confidence:'generic'};
  return {key:'',confidence:'unknown'};
 }
 function decodeOnlineProducts(body,query){
