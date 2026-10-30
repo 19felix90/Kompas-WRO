@@ -545,7 +545,6 @@ document.addEventListener('input',e=>{
   updateProductIdentification();return;
  }
 });
-});
 document.addEventListener('change',e=>{
  if(e.target.id==='ingredient-type'){ui.productSelectionManual=true;ui.selectedIngredient=e.target.value;updateProductIdentification();}
  if(e.target.id==='base-filter'){ui.base=e.target.value;refreshResults();}
