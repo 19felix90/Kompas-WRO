@@ -138,7 +138,7 @@ function loadState(){
       cart:Array.isArray(raw.cart)?raw.cart.filter(x=>x&&typeof x.key==='string').slice(0,200):[],
       history:Array.isArray(raw.history)?raw.history.slice(-100):[],brandOverrides:raw.brandOverrides&&typeof raw.brandOverrides==='object'&&!Array.isArray(raw.brandOverrides)?Object.fromEntries(Object.entries(raw.brandOverrides).filter(([n,k])=>n.length<=120&&typeof k==='string'&&(INDEX.has(k)||k.startsWith('custom:'))).slice(0,500)):{},demo:!!raw.demo};
   }catch(e){console.warn('Nie można odczytać danych',e);}
-  return {stock:DEMO_STOCK.map(x=>({...x})),favorites:[],cart:[],history:[],demo:true};
+  return {stock:DEMO_STOCK.map(x=>({...x})),favorites:[],cart:[],history:[],brandOverrides:{},demo:true};
 }
 let state=loadState();
 let ui={page:'home',filter:'all',base:'any',taste:'any',query:'',sort:'fit',modal:null,servings:1,selectedIngredient:'',productSelectionManual:false,onlineStatus:'idle',onlineError:'',onlineSearchQuery:'',onlineSearchResults:[],onlineSearchLoading:false,onlineSynced:false};
