@@ -105,7 +105,7 @@ function updateProductIdentification(){
  const name=document.getElementById('add-name'),select=document.getElementById('ingredient-type'),box=document.getElementById('product-match');
  if(!name||!select||!box)return;
  const chosen=PRODUCT_SEARCH.selected;
- const result=chosen&&normalize(chosen.name)===normalize(name.value)?{key:chosen.key||'',status:['Open Food Facts','Wikidata'].includes(chosen.source)?'online':'brand'}:identifyProduct(name.value);
+ const result=chosen&&normalize(chosen.name)===normalize(name.value)?{key:chosen.key||'',status:['DrinkDB','Open Food Facts','Wikidata'].includes(chosen.source)?'online':'brand'}:identifyProduct(name.value);
  if(!ui.productSelectionManual){
    select.value=result.key?(INDEX.has(result.key)?result.key:'custom'):'';
    ui.selectedIngredient=result.key||'';
