@@ -34,6 +34,7 @@ const INGREDIENTS = [
   {id:'coconut_liqueur',name:'Likier kokosowy',en:'Coconut liqueur',type:'alcohol',aliases:['coconut liqueur']},
   {id:'herbal_liqueur',name:'Likier ziołowy',en:'Herbal liqueur',type:'alcohol',aliases:['herbal liqueur']},
   {id:'elderflower_liqueur',name:'Likier z kwiatu bzu',en:'Elderflower liqueur',type:'alcohol',aliases:['elderflower liqueur']},
+  {id:'passion_fruit_liqueur',name:'Likier z marakui',en:'Passion fruit liqueur',type:'alcohol',aliases:['passoa','passoã','passoa passion fruit liqueur','passoã passion fruit liqueur','passionfruit liqueur','passion fruit liqueur','likier z marakui','likier marakujowy','liqueur de fruit de la passion']},
   {id:'peach_liqueur',name:'Likier brzoskwiniowy',en:'Peach liqueur',type:'alcohol',aliases:['peach schnapps','peach liqueur']},
   {id:'melon_liqueur',name:'Likier melonowy',en:'Melon liqueur',type:'alcohol',aliases:['melon liqueur']},
   {id:'limoncello',name:'Limoncello',en:'Limoncello',type:'alcohol',aliases:['limoncello']},

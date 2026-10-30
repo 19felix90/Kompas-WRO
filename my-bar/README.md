@@ -17,3 +17,6 @@ Podczas wpisywania nazwy (np. `botucal`) aplikacja od razu pokazuje konkretne wa
 Dla marek spoza katalogu może wyszukać dodatkowe produkty w [Open Food Facts Search-a-licious](https://openfoodfacts.github.io/search-a-licious/users/ref-openapi/). Zapytania wysyłane są tylko po wpisaniu co najmniej 4 znaków i zatrzymaniu pisania, z cache oraz limitem częstości. Jeśli lokalny katalog już zwrócił wystarczająco wiele wyników, dodatkowe wyszukiwanie można uruchomić przyciskiem. Dostępność API, CORS i pokrycie produktów zależą od zewnętrznego dostawcy — w razie niepowodzenia lokalny katalog i ręczny wybór nadal działają. Zapasy są nadal zapisywane tylko lokalnie.
 
 **Awaryjna baza produktów:** Przy niedostępności Open Food Facts wyszukiwarka może skorzystać z publicznego API Wikidata. Dopasowuje tylko wyniki o rozpoznawalnym rodzaju napoju. Wpisy w katalogu są podpowiedziami, a rodzaj możesz ręcznie poprawić. Nie wszystkie marki i warianty muszą znajdować się w tych bazach.
+
+### Likier z marakui
+Passoã / Passoa jest rozpoznawana jako **likier z marakui**, a nie purée ani syrop. Warianty zapisuje się jako konkretną nazwę na butelce. Ta kategoria ma odrębny identyfikator `passion_fruit_liqueur`, dzięki czemu nie zastępuje owocu `passion_fruit` w przepisach.

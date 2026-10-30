@@ -98,6 +98,8 @@ function classifyExternalProduct(name,categories=''){
  if(check(/\b(pisco)\b/))return {key:'pisco',confidence:'type'};
  if(check(/\b(cachaca)\b/))return {key:'cachaca',confidence:'type'};
  if(check(/\b(beer|beers|piwo)\b/))return {key:'beer',confidence:'generic'};
+ if(check(/\b(passoa|passion fruit liqueur|passionfruit liqueur|likier marakujowy|likier z marakui)\b/))return {key:'passion_fruit_liqueur',confidence:'type'};
+ if(check(/\b(passion fruit|passionfruit|marakuja)\b/)&&check(/\b(liqueur|liqueurs|liquor|liquors|likier|likierow|liqueur de fruit)\b/)&&!check(/\b(syrup|syrop|puree|pure)\b/))return {key:'passion_fruit_liqueur',confidence:'type'};
  if(check(/\b(cream liqueur|irish cream|likier smietankowy)\b/))return {key:'cream_liqueur',confidence:'type'};
  if(check(/\b(coconut liqueur|likier kokosowy)\b/))return {key:'coconut_liqueur',confidence:'type'};
  if(check(/\b(coffee liqueur|likier kawowy)\b/))return {key:'coffee_liqueur',confidence:'type'};

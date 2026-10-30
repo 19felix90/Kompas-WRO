@@ -38,6 +38,7 @@ const PRODUCT_BRAND_GROUPS=[
  ['coconut_liqueur',["Malibu","Malibu Original","Bols Coconut"]],
  ['herbal_liqueur',["Jägermeister","Jagermeister","Becherovka","Chartreuse Verte","Chartreuse Jaune","Suze"]],
  ['elderflower_liqueur',["St-Germain","St Germain","St-Germain Elderflower","Bols Elderflower"]],
+ ['passion_fruit_liqueur',["Passoã","Passoa","Passoã Passion Fruit Liqueur","Passoa Passion Fruit Liqueur"]],
  ['peach_liqueur',["Archers Peach Schnapps","De Kuyper Peachtree","Peachtree","Bols Peach"]],
  ['melon_liqueur',["Midori","Bols Melon"]],
  ['limoncello',["Villa Massa","Pallini Limoncello","Limoncello di Capri"]],
