@@ -1,3 +1,12 @@
+> **ARCHIWALNA KOPIA — projekt przeniesiony do [repozytorium Bar](https://github.com/19felix90/Bar).**
+>
+> Nowy adres aplikacji po włączeniu GitHub Pages: https://19felix90.github.io/Bar/ .
+> Ten folder pozostaje tymczasowo, aby stary adres i możliwość wyeksportowania zapasów nie zniknęły przed uruchomieniem nowej strony. Nie rozwijamy już tutaj My Bar.
+>
+> **Na iPhonie:** przed usunięciem starego skrótu zapisz kopię JSON z ustawień starej aplikacji. Po uruchomieniu nowego adresu zaimportuj kopię, jeżeli dane nie przeniosą się automatycznie.
+
+---
+
 # My Bar — prywatny barman (v1.2)
 
 Aplikacja PWA w języku polskim. Dodawaj alkohole i inne składniki, sprawdzaj dostępne koktajle i brakujące produkty, twórz listę zakupów i dopasowuj porcje.
