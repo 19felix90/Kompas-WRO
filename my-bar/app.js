@@ -104,7 +104,8 @@ function ingredientOptions(selected=''){
 function updateProductIdentification(){
  const name=document.getElementById('add-name'),select=document.getElementById('ingredient-type'),box=document.getElementById('product-match');
  if(!name||!select||!box)return;
- const result=identifyProduct(name.value);
+ const chosen=PRODUCT_SEARCH.selected;
+ const result=chosen&&normalize(chosen.name)===normalize(name.value)?{key:chosen.key||'',status:chosen.source==='Open Food Facts'?'online':'brand'}:identifyProduct(name.value);
  if(!ui.productSelectionManual){
    select.value=result.key?(INDEX.has(result.key)?result.key:'custom'):'';
    ui.selectedIngredient=result.key||'';
@@ -113,7 +114,7 @@ function updateProductIdentification(){
  if(ui.productSelectionManual&&select.value){
    msg='Wybrano ręcznie: <b>'+esc(select.value==='custom'?'Inny / własny produkt':iName(select.value))+'</b><small>Zapamiętamy tę kategorię dla podanej nazwy.</small>';type='matched';
  }else if(result.key&&!result.key.startsWith('custom:')){
-   msg='Rozpoznano: <b>'+esc(iName(result.key))+'</b><small>'+(result.status==='brand'?'Na podstawie marki i wariantu.':'Na podstawie nazwy składnika.')+' Możesz zmienić kategorię poniżej.</small>';type='matched';
+   msg='Rozpoznano: <b>'+esc(iName(result.key))+'</b><small>'+(result.status==='online'?'Wskazówka z Open Food Facts — sprawdź wariant.':result.status==='brand'?'Na podstawie marki i wariantu.':'Na podstawie nazwy składnika.')+' Możesz zmienić kategorię poniżej.</small>';type='matched';
  }else if(result.status==='remembered'){
    msg='Zapamiętano: <b>Inny / własny produkt</b><small>Nie zastępuje automatycznie składników z przepisów.</small>';type='matched';
  }else if(result.status==='ambiguous'){
@@ -217,12 +218,12 @@ function cardHtml(r){
 }
 function shellPage(){
  const titleMap={home:'Odkrywaj koktajle',cocktails:'Katalog koktajli',bar:'Twój barek',shopping:'Lista zakupów',favorites:'Twoje ulubione'};
- return `<div class="app-shell"><aside class="sidebar"><a href="#start" class="brand" data-action="navigate" data-page="home"><span class="brand-icon">${ico('glass','xl')}</span><span class="brand-copy"><strong>MY BAR</strong><span>TWÓJ PRYWATNY BARMAN</span></span></a><div class="side-caption">Twój koktajlowy świat</div><nav class="nav-stack" aria-label="Menu główne">${TABS.map(([page,label,ic])=>`<button class="nav-item ${ui.page===page?'active':''}" data-action="navigate" data-page="${page}">${ico(ic)}${label}</button>`).join('')}</nav><div class="sidebar-bottom"><div class="mini-panel"><span class="eyebrow">${ico('sparkle','sm')} POMYSŁ NA DZIŚ</span><strong>Co wymieszać z tego, co masz?</strong><p>Sprawdź, jakie nowe przepisy czekają na odkrycie.</p><button class="btn small soft" data-action="sync-online">${ico('cloud','sm')} Odkryj online</button></div><button class="nav-item" data-action="open-settings">${ico('settings')} Ustawienia i kopia danych</button><div class="sidebar-footer">MY BAR • wersja 1.1</div></div></aside>
+ return `<div class="app-shell"><aside class="sidebar"><a href="#start" class="brand" data-action="navigate" data-page="home"><span class="brand-icon">${ico('glass','xl')}</span><span class="brand-copy"><strong>MY BAR</strong><span>TWÓJ PRYWATNY BARMAN</span></span></a><div class="side-caption">Twój koktajlowy świat</div><nav class="nav-stack" aria-label="Menu główne">${TABS.map(([page,label,ic])=>`<button class="nav-item ${ui.page===page?'active':''}" data-action="navigate" data-page="${page}">${ico(ic)}${label}</button>`).join('')}</nav><div class="sidebar-bottom"><div class="mini-panel"><span class="eyebrow">${ico('sparkle','sm')} POMYSŁ NA DZIŚ</span><strong>Co wymieszać z tego, co masz?</strong><p>Sprawdź, jakie nowe przepisy czekają na odkrycie.</p><button class="btn small soft" data-action="sync-online">${ico('cloud','sm')} Odkryj online</button></div><button class="nav-item" data-action="open-settings">${ico('settings')} Ustawienia i kopia danych</button><div class="sidebar-footer">MY BAR • wersja 1.2</div></div></aside>
  <div class="main"><header class="topbar"><div class="topbar-l"><span class="crumb">MY BAR / ${esc(titleMap[ui.page])}</span><strong>${esc(titleMap[ui.page])}</strong></div><div class="topbar-r"><div class="online-indicator ${navigator.onLine?'':'off'}"><i class="dot"></i>${navigator.onLine?'Tryb online':'Tryb offline'}</div><button class="btn small ghost" data-action="open-add">${ico('plus','sm')} Dodaj do barku</button><button class="icon-btn" title="Ustawienia" aria-label="Ustawienia" data-action="open-settings">${ico('settings')}</button></div></header>
  <main class="content" id="main-content">${pageHtml()}</main>${footer()}</div></div>
  <nav class="mobile-nav" aria-label="Nawigacja dolna">${TABS.map(([page,label,ic])=>`<button class="mobile-tab ${ui.page===page?'active':''}" data-action="navigate" data-page="${page}">${ico(ic)}<span>${label}</span></button>`).join('')}</nav>`;
 }
-function footer(){return `<footer class="footer"><span>MY BAR 1.1 • Twoje zapasy są zapisywane w tej przeglądarce.</span><span>Przepisy online: <a href="https://24cocktails.com/developers.html" target="_blank" rel="noopener noreferrer">24cocktails.com</a> • Korzystaj odpowiedzialnie (18+).</span></footer>`;}
+function footer(){return `<footer class="footer"><span>MY BAR 1.2 • Twoje zapasy są zapisywane w tej przeglądarce.</span><span>Przepisy online: <a href="https://24cocktails.com/developers.html" target="_blank" rel="noopener noreferrer">24cocktails.com</a> • Korzystaj odpowiedzialnie (18+).</span></footer>`;}
 function demoBanner(){return state.demo?`<div class="demo-banner">${ico('info','sm')} <span>Wyświetlasz <b>przykładowy barek</b>. Możesz testować aplikację lub zacząć z własną listą.</span><button data-action="clear-demo">Wyczyść przykład</button></div>`:'';}
 function pageHtml(){return ui.page==='home'?homePage():ui.page==='cocktails'?cocktailsPage():ui.page==='bar'?barPage():ui.page==='shopping'?shoppingPage():favoritesPage();}
 function homePage(){
@@ -268,7 +269,7 @@ function cocktailsPage(){
 }
 function barPage(){
  const grouped=Object.keys(TYPES).map(type=>[type,state.stock.filter(x=>iType(x.key)===type)]).filter(([_,items])=>items.length);
- return `${demoBanner()}<div class="page-intro"><div><div class="eyebrow">TWOJE ZAPASY</div><h1>Mój barek</h1><p class="subtle">Dodaj butelki, miksery i świeże dodatki. Marki i warianty rozpoznajemy automatycznie, z możliwością poprawienia typu.</p></div><div class="flex wrap"><button class="btn ghost" data-action="export-data">${ico('download','sm')} Kopia danych</button><button class="btn primary" data-action="open-add">${ico('plus','sm')} Dodaj produkt</button></div></div>
+ return `${demoBanner()}<div class="page-intro"><div><div class="eyebrow">TWOJE ZAPASY</div><h1>Mój barek</h1><p class="subtle">Dodaj butelki, miksery i świeże dodatki. Wpisz markę, wybierz wariant z podpowiedzi, a dopasujemy go do przepisów.</p></div><div class="flex wrap"><button class="btn ghost" data-action="export-data">${ico('download','sm')} Kopia danych</button><button class="btn primary" data-action="open-add">${ico('plus','sm')} Dodaj produkt</button></div></div>
  ${state.stock.length?`<div class="panel panel-pad"><div class="flex between wrap"><div><b style="font-size:18px">${state.stock.length} produktów</b><p class="subtle" style="margin:3px 0 0">Kliknij ołówek, aby zmienić nazwę lub stan butelki.</p></div><span class="pill good">${ico('shield','sm')} Zapis lokalny</span></div></div>${grouped.map(([type,items])=>`<h3 class="group-title">${TYPES[type]} <span class="muted tiny">(${items.length})</span></h3><div class="stock-grid">${items.map(stockCard).join('')}</div>`).join('')}`:emptyContent('Pusty barek','Zacznij od dodania ginu, rumu, wódki lub dowolnego alkoholu, który masz w domu.','open-add','Dodaj pierwszy produkt')}
  <div class="cta-panel"><div class="flex"><span class="icon-wrap">${ico('info','lg')}</span><div><h3>Nie musisz liczyć mililitrów</h3><p>Przy dodawaniu możesz wybrać „Jest w barku” zamiast dokładnego stanu. Rozliczanie ilości jest opcjonalne.</p></div></div><button class="btn ghost small" data-action="open-add">Dodaj składnik</button></div>`;
 }
@@ -306,24 +307,16 @@ function renderModal(){
    const original=m.kind==='edit'?state.stock.find(x=>x.id===m.id):null;
    if(m.kind==='edit'&&!original){ui.modal=null;return renderModal();}
    const prefill=m.prefill||'',selected=original?.key||prefill||'';
-   root.innerHTML=`<div class="overlay center" data-action="overlay"><div class="dialog compact" role="dialog" aria-modal="true" aria-labelledby="add-title"><div class="dialog-head"><strong id="add-title">${original?'Edytuj produkt':'Dodaj do swojego barku'}</strong><button class="icon-btn" aria-label="Zamknij" data-action="close-modal">${ico('close')}</button></div><form id="stock-form" class="dialog-content" style="padding-top:4px"><label class="form-label" for="add-name">Nazwa alkoholu lub składnika</label><input class="form-input" id="add-name" name="name" placeholder="np. Hendrick’s Gin, Aperol, sok z limonki" value="${esc(original?.name||iName(selected,selected?'':''))}" maxlength="120" required autocomplete="off"><p class="form-note">Wpisz dokładną markę i wariant. Rozpoznaną kategorię możesz poprawić.</p><div id="product-match" class="product-match waiting" role="status" aria-live="polite"></div><label class="form-label" for="ingredient-type">Rozpoznany rodzaj produktu</label><select class="form-input product-select" id="ingredient-type" name="ingredientKey" required>${ingredientOptions(original?.key||selected)}</select><div class="suggestions" id="ingredient-suggestions">${ingredientSuggestions(original?.name||iName(selected,selected?'':''))}</div>
+   root.innerHTML=`<div class="overlay center" data-action="overlay"><div class="dialog compact" role="dialog" aria-modal="true" aria-labelledby="add-title"><div class="dialog-head"><strong id="add-title">${original?'Edytuj produkt':'Dodaj do swojego barku'}</strong><button class="icon-btn" aria-label="Zamknij" data-action="close-modal">${ico('close')}</button></div><form id="stock-form" class="dialog-content" style="padding-top:4px"><label class="form-label" for="add-name">Nazwa alkoholu lub składnika</label><input class="form-input" id="add-name" name="name" placeholder="np. Hendrick’s Gin, Aperol, sok z limonki" value="${esc(original?.name||iName(selected,selected?'':''))}" maxlength="120" required autocomplete="off"><p class="form-note">Wpisz markę, np. Botucal, i wybierz butelkę z podpowiedzi. Możesz zmienić rozpoznany typ.</p><div id="product-match" class="product-match waiting" role="status" aria-live="polite"></div><label class="form-label" for="ingredient-type">Rozpoznany rodzaj produktu</label><select class="form-input product-select" id="ingredient-type" name="ingredientKey" required>${ingredientOptions(original?.key||selected)}</select><div class="suggestions product-autocomplete" id="ingredient-suggestions" aria-label="Wyniki wyszukiwania produktów">${ingredientSuggestions(original?.name||iName(selected,selected?'':''))}</div>
  <label class="switch-row"><input id="track-quantity" name="track" type="checkbox" ${original?.ml!==null&&original?.ml!==undefined?'checked':''}><span>Chcę śledzić dokładny stan butelki (w ml)</span></label><div id="quantity-wrap" style="${original?.ml!==null&&original?.ml!==undefined?'':'display:none'}"><label class="form-label" for="add-quantity">Ilość dostępna w ml</label><input class="form-input" id="add-quantity" name="quantity" type="number" min="0" max="100000" step="1" placeholder="np. 500" value="${original?.ml??''}"><p class="form-note">Śledzenie ilości najlepiej sprawdza się przy napojach. Owoce i dekoracje traktujemy jako dostępne.</p></div><div class="form-actions" style="justify-content:${original?'space-between':'flex-end'}">${original?`<button type="button" class="danger-link" data-action="delete-stock" data-id="${esc(original.id)}">${ico('trash','sm')} Usuń produkt</button>`:''}<div class="flex"><button type="button" class="btn ghost" data-action="close-modal">Anuluj</button><button type="submit" class="btn primary">${ico('check','sm')} ${original?'Zapisz zmiany':'Dodaj do barku'}</button></div></div></form></div></div>`;
    ui.selectedIngredient=original?.key||prefill||'';ui.productSelectionManual=!!original;updateProductIdentification();
  }else if(m.kind==='settings'){
-   root.innerHTML=`<div class="overlay center" data-action="overlay"><div class="dialog compact" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div class="dialog-head"><strong id="settings-title">Ustawienia My Bar</strong><button class="icon-btn" aria-label="Zamknij" data-action="close-modal">${ico('close')}</button></div><div class="dialog-content"><h3>Twoje dane</h3><p class="side-note">Zapasy, ulubione i zakupy są przechowywane lokalnie w tej przeglądarce. Nie ma jeszcze synchronizacji między telefonem a komputerem.</p><div class="flex wrap"><button class="btn ghost" data-action="export-data">${ico('download','sm')} Eksportuj kopię</button><label class="btn ghost" for="import-file">${ico('upload','sm')} Importuj kopię</label><input id="import-file" type="file" accept="application/json,.json" hidden></div><hr style="border:0;border-top:1px solid #3a444d;margin:23px 0"><h3>Przepisy z internetu</h3><p class="side-note">Korzystamy z API 24cocktails.com. Po kliknięciu „Dobierz z internetu” wysyłamy wyłącznie nazwy posiadanych składników, bez informacji o ilościach. Dostawca wymaga wskazania źródła przepisu.</p><a class="link small" target="_blank" rel="noopener noreferrer" href="https://24cocktails.com/terms.html">Warunki korzystania z API ${ico('external','sm')}</a><hr style="border:0;border-top:1px solid #3a444d;margin:23px 0"><h3>Wyczyść bark</h3><p class="side-note">Możesz rozpocząć od nowa. Przed czyszczeniem warto zrobić kopię danych.</p><button class="btn ghost" data-action="open-reset">${ico('trash','sm')} Wyczyść wszystkie dane</button></div></div></div>`;
+   root.innerHTML=`<div class="overlay center" data-action="overlay"><div class="dialog compact" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div class="dialog-head"><strong id="settings-title">Ustawienia My Bar</strong><button class="icon-btn" aria-label="Zamknij" data-action="close-modal">${ico('close')}</button></div><div class="dialog-content"><h3>Twoje dane</h3><p class="side-note">Zapasy, ulubione i zakupy są przechowywane lokalnie w tej przeglądarce. Nie ma jeszcze synchronizacji między telefonem a komputerem.</p><div class="flex wrap"><button class="btn ghost" data-action="export-data">${ico('download','sm')} Eksportuj kopię</button><label class="btn ghost" for="import-file">${ico('upload','sm')} Importuj kopię</label><input id="import-file" type="file" accept="application/json,.json" hidden></div><hr style="border:0;border-top:1px solid #3a444d;margin:23px 0"><h3>Wyszukiwanie produktów</h3><p class="side-note">Podczas dodawania produktu aplikacja może sprawdzić jego nazwę w katalogu Open Food Facts. Wysyła tylko wpisane słowa, nie zawartość barku. Wyszukiwanie jest ograniczane, a wyniki zapamiętywane tymczasowo. Lokalny katalog działa bez internetu.</p><a class="link small" target="_blank" rel="noopener noreferrer" href="https://world.openfoodfacts.org/">Źródło danych produktów: Open Food Facts</a><hr style="border:0;border-top:1px solid #3a444d;margin:23px 0"><h3>Przepisy z internetu</h3><p class="side-note">Korzystamy z API 24cocktails.com. Po kliknięciu „Dobierz z internetu” wysyłamy wyłącznie nazwy posiadanych składników, bez informacji o ilościach. Dostawca wymaga wskazania źródła przepisu.</p><a class="link small" target="_blank" rel="noopener noreferrer" href="https://24cocktails.com/terms.html">Warunki korzystania z API ${ico('external','sm')}</a><hr style="border:0;border-top:1px solid #3a444d;margin:23px 0"><h3>Wyczyść bark</h3><p class="side-note">Możesz rozpocząć od nowa. Przed czyszczeniem warto zrobić kopię danych.</p><button class="btn ghost" data-action="open-reset">${ico('trash','sm')} Wyczyść wszystkie dane</button></div></div></div>`;
  }else if(m.kind==='reset'){
    root.innerHTML=`<div class="overlay center" data-action="overlay"><div class="dialog compact" role="alertdialog" aria-modal="true" aria-labelledby="reset-title"><div class="dialog-head"><strong id="reset-title">Wyczyścić dane?</strong><button class="icon-btn" data-action="close-modal" aria-label="Zamknij">${ico('close')}</button></div><div class="dialog-content"><p class="side-note">Usunięte zostaną zapasy, lista zakupów, ulubione i historia przygotowanych koktajli z tej przeglądarki.</p><div class="form-actions"><button class="btn ghost" data-action="close-modal">Anuluj</button><button class="btn primary" data-action="reset-all">Wyczyść dane</button></div></div></div></div>`;
  }
 }
-function ingredientSuggestions(q){
- const n=normalize(q);
- if(n.length<2)return '<span class="tiny muted">Wpisz minimum 2 znaki, aby zobaczyć propozycje.</span>';
- const brands=PRODUCT_MATCHES.filter(x=>x.norm.startsWith(n)||x.norm.includes(' '+n)).slice(0,6);
- const types=INGREDIENTS.filter(x=>normalize([x.name,x.en,...x.aliases].join(' ')).includes(n)).slice(0,5);
- return [...brands.map(x=>'<button type="button" class="suggestion brand-suggestion" data-action="choose-brand" data-name="'+esc(x.name)+'">'+esc(x.name)+' <span>· '+esc(iName(x.key))+'</span></button>'),
-  ...types.map(x=>'<button type="button" class="suggestion" data-action="choose-ingredient" data-id="'+esc(x.id)+'">Rodzaj: '+esc(x.name)+'</button>')].join('')||
-  '<span class="tiny muted">Nie ma marki w słowniku? Wybierz kategorię z listy powyżej.</span>';
-}
+function ingredientSuggestions(q){return productSuggestionMarkup(q);}
 function toast(message){const node=document.getElementById('toast');node.innerHTML=`<div class="toast-item" role="status">${esc(message)}</div>`;clearTimeout(toast.timer);toast.timer=setTimeout(()=>node.innerHTML='',3300);}
 function addToCart(key,name=''){
  if(!key)return false;
@@ -342,7 +335,7 @@ function saveStock(e){e.preventDefault();
  const item=state.stock.find(x=>x.id===ui.modal?.id);
  if(ui.modal?.kind==='edit'&&item){item.name=name;item.key=key;item.ml=qty;}
  else state.stock.push({id:freshId(),key,name,ml:qty});
- if(ui.productSelectionManual)state.brandOverrides[normalize(name)]=key;
+ if(ui.productSelectionManual||(PRODUCT_SEARCH.selected&&normalize(PRODUCT_SEARCH.selected.name)===normalize(name)))state.brandOverrides[normalize(name)]=key;
  state.demo=false;state.cart=state.cart.filter(x=>x.key!==key);saveState();
  ui.modal=null;refresh();toast(item?'Produkt zaktualizowany':'Dodano do barku');
 }
@@ -470,7 +463,7 @@ document.addEventListener('click',async e=>{
  if(action==='overlay'){if(e.target===el){ui.modal=null;renderModal();}return;}
  if(el.tagName==='A'&&action==='navigate')e.preventDefault();
  if(action==='navigate'){navigate(el.dataset.page);return;}
- if(action==='open-add'){ui.modal={kind:'add',prefill:id||''};renderModal();setTimeout(()=>document.getElementById('add-name')?.focus(),20);return;}
+ if(action==='open-add'){resetProductOnline();PRODUCT_SEARCH.selected=null;ui.modal={kind:'add',prefill:id||''};renderModal();setTimeout(()=>document.getElementById('add-name')?.focus(),20);return;}
  if(action==='close-modal'){ui.modal=null;renderModal();return;}
  if(action==='open-recipe'){
     const r=getRecipe(id);if(!r)return;
@@ -483,21 +476,36 @@ document.addEventListener('click',async e=>{
  if(action==='set-filter'){ui.filter=id;refresh();return;}
  if(action==='servings-up'){ui.servings=Math.min(20,ui.servings+1);renderModal();return;}
  if(action==='servings-down'){ui.servings=Math.max(1,ui.servings-1);renderModal();return;}
- if(action==='edit-stock'){ui.modal={kind:'edit',id};renderModal();return;}
+ if(action==='edit-stock'){resetProductOnline();PRODUCT_SEARCH.selected=null;ui.modal={kind:'edit',id};renderModal();return;}
  if(action==='delete-stock'){state.stock=state.stock.filter(x=>x.id!==id);state.demo=false;saveState();ui.modal=null;refresh();toast('Usunięto produkt');return;}
  if(action==='choose-ingredient'){
   const n=document.getElementById('add-name'),sel=document.getElementById('ingredient-type');
   if(n&&!n.value.trim())n.value=iName(id);
   if(sel)sel.value=id;
-  ui.selectedIngredient=id;ui.productSelectionManual=true;updateProductIdentification();
+  PRODUCT_SEARCH.selected=null;ui.selectedIngredient=id;ui.productSelectionManual=true;updateProductIdentification();
   if(n){document.getElementById('ingredient-suggestions').innerHTML=ingredientSuggestions(n.value);n.focus();}
   return;
  }
  if(action==='choose-brand'){
   const n=document.getElementById('add-name');if(!n)return;
-  n.value=el.dataset.name||'';ui.productSelectionManual=false;ui.selectedIngredient='';
-  document.getElementById('ingredient-suggestions').innerHTML=ingredientSuggestions(n.value);
-  updateProductIdentification();n.focus();return;
+  n.value=el.dataset.name||'';PRODUCT_SEARCH.selected=null;resetProductOnline();
+  ui.productSelectionManual=false;ui.selectedIngredient='';
+  updateProductIdentification();
+  const list=document.getElementById('ingredient-suggestions');if(list)list.innerHTML='';
+  n.focus();return;
+ }
+ if(action==='choose-online-product'){
+  const n=document.getElementById('add-name'),item=selectedOnlineProduct(id);
+  if(!n||!item)return;
+  n.value=item.name;PRODUCT_SEARCH.selected=item;ui.selectedIngredient=item.key||'';ui.productSelectionManual=false;
+  updateProductIdentification();
+  const list=document.getElementById('ingredient-suggestions');if(list)list.innerHTML='';
+  n.focus();return;
+ }
+ if(action==='search-products-online'){
+  const n=document.getElementById('add-name');
+  if(!n||normalize(n.value).length<4)return;
+  scheduleProductOnlineSearch(n.value,{force:true});renderProductSuggestions();return;
  }
  if(action==='clear-demo'){state=blankState();saveState();refresh();toast('Teraz możesz dodawać własne zapasy');return;}
  if(action==='open-settings'){ui.modal={kind:'settings'};renderModal();return;}
@@ -540,9 +548,9 @@ document.addEventListener('input',e=>{
    ui.query=e.target.value;refreshResults();return;
  }
  if(e.target.id==='add-name'){
-  ui.selectedIngredient='';ui.productSelectionManual=false;
-  const dest=document.getElementById('ingredient-suggestions');if(dest)dest.innerHTML=ingredientSuggestions(e.target.value);
-  updateProductIdentification();return;
+  PRODUCT_SEARCH.selected=null;ui.selectedIngredient='';ui.productSelectionManual=false;
+  renderProductSuggestions();updateProductIdentification();
+  scheduleProductOnlineSearch(e.target.value);return;
  }
 });
 document.addEventListener('change',e=>{
@@ -554,6 +562,15 @@ document.addEventListener('change',e=>{
  if(e.target.id==='import-file'){importJSON(e.target.files?.[0]);}
 });
 document.addEventListener('keydown',e=>{
+ if(e.target.id==='add-name'&&e.key==='ArrowDown'){
+  const first=document.querySelector('#ingredient-suggestions .product-option');
+  if(first){e.preventDefault();first.focus();}return;
+ }
+ if(e.target.matches?.('#ingredient-suggestions .product-option')&&['ArrowDown','ArrowUp'].includes(e.key)){
+  const buttons=[...document.querySelectorAll('#ingredient-suggestions .product-option')];
+  const i=buttons.indexOf(e.target),next=buttons[e.key==='ArrowDown'?Math.min(i+1,buttons.length-1):Math.max(0,i-1)];
+  if(next){e.preventDefault();next.focus();}return;
+ }
  if(e.key==='Escape'&&ui.modal){ui.modal=null;renderModal();}
  if(e.key==='Enter'&&e.target.closest('.recipe-card')&&e.target.classList.contains('recipe-card')){e.preventDefault();const el=e.target;ui.modal={kind:'recipe',id:el.dataset.id};ui.servings=1;renderModal();}
 });
