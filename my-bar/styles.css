@@ -98,3 +98,17 @@ h1,h2,h3,h4,p{margin-top:0;}h1{font-size:clamp(28px,3.2vw,43px);line-height:1.16
 @media(max-width:370px){.card-grid{grid-template-columns:1fr;}.card-art{height:194px;}.hero h1{font-size:32px;}.hero-actions .btn{flex:1;}.stat span{font-size:9px;}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important;}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes slideIn{from{transform:translateX(22px);opacity:.85}to{transform:translateX(0);opacity:1}}@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Identyfikacja marki i wariantu butelki — My Bar 1.1 */
+.product-match{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:12px;border:1px solid #4d535b;background:#252d34;color:#d5dce0;font-size:12px;line-height:1.5;margin-top:12px}
+.product-match-icon{display:inline-flex;flex-shrink:0;margin-top:2px}
+.product-match b{color:#f4ddb4}
+.product-match small{display:block;color:#b9c3ca;font-size:11px;margin-top:3px}
+.product-match.matched{background:#23362f;border-color:#466d56;color:#c7f0d3}
+.product-match.matched .product-match-icon{color:#90e0af}
+.product-match.uncertain{background:#3b3027;border-color:#806342;color:#f0d9bd}
+.product-match.uncertain .product-match-icon{color:#f0bf82}
+.product-select{appearance:auto;min-height:46px;color-scheme:dark}
+.product-select optgroup{background:#1b232a}
+.brand-suggestion span{color:#ddbb8c;font-size:10px}
+@media(max-width:600px){.product-match{padding:11px 12px}.dialog.compact{max-height:94vh}.suggestions{max-height:118px}}
