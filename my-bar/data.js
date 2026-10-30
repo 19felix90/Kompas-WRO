@@ -30,6 +30,8 @@ const INGREDIENTS = [
   {id:'spiced_rum',name:'Rum korzenny (spiced)',en:'Spiced rum',type:'alcohol',aliases:['spiced rum','rum korzenny']},
   {id:'flavored_vodka',name:'Wódka smakowa',en:'Flavored vodka',type:'alcohol',aliases:['flavored vodka','wodka smakowa']},
   {id:'flavored_gin',name:'Gin smakowy',en:'Flavored gin',type:'alcohol',aliases:['flavored gin','gin smakowy']},
+  {id:'rum_liqueur',name:'Likier na bazie rumu',en:'Rum liqueur',type:'alcohol',aliases:['rum liqueur','rum-based liqueur','likier rumowy','likier na bazie rumu']},
+  {id:'plant_cream_liqueur',name:'Likier kremowy roślinny',en:'Plant-based cream liqueur',type:'alcohol',aliases:['plant-based cream liqueur','vegan cream liqueur','weganski likier kremowy']},
   {id:'cream_liqueur',name:'Likier śmietankowy',en:'Cream liqueur',type:'alcohol',aliases:['cream liqueur','irish cream']},
   {id:'coconut_liqueur',name:'Likier kokosowy',en:'Coconut liqueur',type:'alcohol',aliases:['coconut liqueur']},
   {id:'herbal_liqueur',name:'Likier ziołowy',en:'Herbal liqueur',type:'alcohol',aliases:['herbal liqueur']},

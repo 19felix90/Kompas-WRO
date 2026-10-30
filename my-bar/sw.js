@@ -1,5 +1,5 @@
 // My Bar 1.2: osobny cache w katalogu /my-bar/, nie modyfikuje aplikacji Kompas WRO.
-const CACHE='mybar-shell-1.2.2';
+const CACHE='mybar-shell-1.2.3';
 const ASSETS=['./','./index.html','./styles.css','./data.js','./brands.js','./product-search.js','./app.js','./manifest.webmanifest','./assets/icon.svg','./assets/icon-192.png','./assets/icon-512.png','./assets/apple-touch-icon.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('mybar-shell-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});

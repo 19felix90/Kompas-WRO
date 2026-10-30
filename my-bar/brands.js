@@ -59,7 +59,34 @@ PRODUCT_BRAND_GROUPS.push(
  ['dark_rum',['Botucal Reserva Exclusiva','Botucal Reserva Exlusiva','Botucal Reserva','Botucal Mantuano','Botucal Selección de Familia','Botucal Seleccion de Familia','Botucal Single Vintage','Botucal No.1 Batch Kettle','Botucal No.2 Barbet','Botucal No.3 Pot Still','Diplomático Mantuano','Diplomatico Mantuano','Diplomático Reserva Exclusiva']]
 );
 const PRODUCT_BRANDS=PRODUCT_BRAND_GROUPS.flatMap(([key,names])=>names.map(name=>({key,name})));
+// Produkty o tej samej marce mogą mieć zupełnie różną bazę alkoholu.
+// Nazwa widoczna w autouzupełnianiu jest jedna; pozostałe nazwy są aliasami wyszukiwania.
+PRODUCT_BRANDS.push(
+ {key:'cream_liqueur',name:'Amarula Original Cream',aliases:['Amarula Cream','Amarula Cream Liqueur','Amarula Original','Amarula Original Cream 17%','Amarula Likier Cream','Amarula Cream 17 0,7l']},
+ {key:'cream_liqueur',name:'Amarula Ethiopian Coffee Cream',aliases:['Amarula Ethiopian Coffee','Amarula Ethiopian Coffee Cream Liqueur','Amarula Coffee']},
+ {key:'cream_liqueur',name:'Amarula Vanilla Spice Cream',aliases:['Amarula Vanilla Spice','Amarula Vanilla Spice Cream Liqueur']},
+ {key:'cream_liqueur',name:'Amarula Raspberry Chocolate Baobab Cream',aliases:['Amarula Raspberry Chocolate Baobab','Amarula Raspberry Chocolate and Baobab']},
+ {key:'plant_cream_liqueur',name:'Amarula Vegan Marula Liqueur',aliases:['Amarula Vegan','Amarula Vegan Cream','Amarula Marula Liqueur Vegan']},
+ {key:'gin',name:'Amarula African Gin',aliases:['Amarula Gin','Amarula African Gin 43%']},
+ {key:'dark_rum',name:'Ron Compañero Extra Añejo Panama 54%',aliases:[
+   'Compañero Extra Añejo','Companero Extra Anejo',
+   'Compañero Extra Añejo Panama','Companero Extra Anejo Panama',
+   'Rum Companero Extra Anejo Panama','Rum Compañero Extra Añejo Panama',
+   'Rum Companero Extra Anejo Panama 54 0 7l','Ron Companero Extra Anejo Panama',
+   'Compañero Panama Extra Añejo','Companero Panama Extra Anejo',
+   'Compañero Extra Añejo Panama 54','Companero Extra Anejo Panama 54',
+   'Companero Extra Anejo Panama 54% 0,7l','Ron Compañero Panama Extra Añejo']},
+ {key:'dark_rum',name:'Ron Compañero Gran Reserva Jamaica–Trinidad',aliases:[
+   'Companero Gran Reserva','Compañero Gran Reserva',
+   'Rum Companero Gran Reserva Jamaica Trinidad','Compañero Gran Reserva Jamaica Trinidad',
+   'Ron Companero Gran Reserva Jamaica Trinidad']},
+ {key:'rum_liqueur',name:'Ron Compañero Elixir Orange',aliases:[
+   'Compañero Elixir Orange','Companero Elixir Orange','Rum Companero Elixir Orange',
+   'Compañero Orange Elixir','Ron Companero Elixir Orange']}
+);
 const AMBIGUOUS_BRANDS=[
+ ['amarula','Amarula oferuje likier śmietankowy i gin — wybierz konkretny wariant.'],
+ ['companero','Compañero oferuje rumy dojrzewające i likier na bazie rumu — wybierz wariant.'],
  ['botucal','Botucal ma różne rumy: Planas (biały), Mantuano i Reserva Exclusiva (dojrzewające). Wybierz wariant z podpowiedzi.'],
  ['diplomatico','Diplomático ma różne warianty rumu. Wybierz konkretną butelkę z podpowiedzi.'],
  ['martini','Marka Martini ma różne wermuty i wina musujące — dopisz wariant.'],

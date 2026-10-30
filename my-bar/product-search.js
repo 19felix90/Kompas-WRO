@@ -18,22 +18,38 @@ function editDistanceLimited(a,b,max=2){
   }
   return prev[b.length];
 }
-function productLocalScore(query,name){
- const n=normalize(name),q=normalize(query);
- if(!q||!n)return Infinity;
- if(n===q)return 0;
- if(n.startsWith(q+' '))return 5;
- if(n.startsWith(q))return 8;
- if(n.includes(' '+q+' '))return 16;
- if(n.includes(' '+q))return 19;
- if(n.includes(q))return 25;
- if(q.length>=4){
-   const terms=n.split(' ');
-   const first=terms.slice(0,2).join(' ');
-   if(editDistanceLimited(q,first,2)<=2)return 34+editDistanceLimited(q,first,2);
-   for(const term of terms)if(term.length>=4&&editDistanceLimited(q,term,2)<=2)return 41+editDistanceLimited(q,term,2);
+// Pozwala wkleić pełną nazwę ze sklepu (np. "Rum Companero ... 54% / 0,7l"),
+// zachowując dopasowanie po nazwie wariantu i ignorując końcowe dane opakowania.
+function normalizedProductQueries(query){
+ const q=normalize(query);
+ const results=new Set(q?[q]:[]);
+ const unprefixed=q.replace(/^(?:(?:rum|ron|rhum|likier|liqueur)\s+)+/,'');
+ if(unprefixed&&unprefixed!==q)results.add(unprefixed);
+ for(const variant of [...results]){
+   const noPack=variant.replace(/\s+\d{2}\s+\d+\s+\d+l$/,'').replace(/\s+\d{2}\s+\d+ml$/,'').replace(/\s+\d{2}$/,'').trim();
+   if(noPack&&noPack!==variant)results.add(noPack);
  }
- return Infinity;
+ return [...results];
+}
+function productLocalScore(query,name){
+ const n=normalize(name);if(!n)return Infinity;
+ let best=Infinity;
+ for(const q of normalizedProductQueries(query)){
+   if(q.length<2)continue;
+   if(n===q)best=Math.min(best,0);
+   else if(n.startsWith(q+' '))best=Math.min(best,5);
+   else if(n.startsWith(q))best=Math.min(best,8);
+   else if(q.startsWith(n+' '))best=Math.min(best,11);
+   else if(n.includes(' '+q+' '))best=Math.min(best,16);
+   else if(n.includes(' '+q))best=Math.min(best,19);
+   else if(n.includes(q))best=Math.min(best,25);
+   else if(q.length>=4){
+     const words=n.split(' '), first=words.slice(0,2).join(' ');
+     if(editDistanceLimited(q,first,2)<=2)best=Math.min(best,34+editDistanceLimited(q,first,2));
+     for(const word of words)if(word.length>=4&&editDistanceLimited(q,word,2)<=2)best=Math.min(best,41+editDistanceLimited(q,word,2));
+   }
+ }
+ return best;
 }
 function localProductCandidates(query){
  const q=normalize(query);if(q.length<2)return [];
@@ -46,7 +62,7 @@ function localProductCandidates(query){
    rows.push({name,key,source,rank:rank+(priority[token]||0)});
  };
  for(const item of PRODUCT_BRANDS){
-   const score=productLocalScore(q,item.name);
+   const score=Math.min(...[item.name,...(item.aliases||[])].map(term=>productLocalScore(q,term)));
    if(Number.isFinite(score))push(item.name,item.key,'Katalog My Bar',score);
  }
  for(const item of state.stock){
@@ -67,6 +83,8 @@ function classifyExternalProduct(name,categories=''){
  if(local.key&&!local.key.startsWith('custom:')&&['brand','remembered'].includes(local.status))return {key:local.key,confidence:'catalog'};
  const check=re=>re.test(combined);
  if(check(/\b(ready to drink|premix|pre mix|mixed cocktails|gotow.+ drink)\b/))return {key:'ready_cocktail',confidence:'type'};
+ if(check(/\b(rum liqueur|rum based liqueur|likier rumowy|likier na bazie rumu)\b/))return {key:'rum_liqueur',confidence:'type'};
+ if(check(/\b(vegan cream liqueur|plant based cream liqueur|weganski likier kremowy)\b/))return {key:'plant_cream_liqueur',confidence:'type'};
  if(check(/\b(vermouth|wermut|vermut)\b/)){
    if(check(/\b(rosso|rouge|sweet|red|czerwony|slodki)\b/))return {key:'sweet_vermouth',confidence:'type'};
    if(check(/\b(bianco|blanc|white|bialy)\b/))return {key:'white_vermouth',confidence:'type'};

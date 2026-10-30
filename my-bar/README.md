@@ -20,3 +20,15 @@ Dla marek spoza katalogu może wyszukać dodatkowe produkty w [Open Food Facts S
 
 ### Likier z marakui
 Passoã / Passoa jest rozpoznawana jako **likier z marakui**, a nie purée ani syrop. Warianty zapisuje się jako konkretną nazwę na butelce. Ta kategoria ma odrębny identyfikator `passion_fruit_liqueur`, dzięki czemu nie zastępuje owocu `passion_fruit` w przepisach.
+
+### Aktualizacja 1.2.3 — Amarula i Ron Compañero
+
+Wyszukiwanie rozpoznaje warianty Amarula Original Cream (likier śmietankowy), Amarula African Gin (gin), Amarula Ethiopian Coffee i Vanilla Spice (likiery śmietankowe) oraz Amarula Vegan (oddzielny likier kremowy roślinny). Sama marka "Amarula" jest niejednoznaczna, więc należy wskazać wariant z podpowiedzi.
+
+W katalogu Ron Compañero Extra Añejo Panama 54% jest rumem ciemnym/dojrzewającym; Compañero Gran Reserva jest rumem dojrzewającym, natomiast Elixir Orange to **likier na bazie rumu**, który nie zastępuje automatycznie zwykłego rumu. Poprawiono obsługę akcentów i nazw skopiowanych ze sklepu, m.in. "Rum Companero Extra Anejo Panama / 54% / 0,7l".
+
+Źródła opisów produktów:
+- Amarula Original Cream: https://www.unitedbeverages.pl/produkt.html?id=600
+- Warianty Amarula: https://sklep-domwhisky.pl/firm-pol-1672244484-Amarula.html
+- Compañero: https://www.roncompanero.com/
+- Compañero Extra Añejo Panama: https://sklep-domwhisky.pl/product-pol-35314-Rum-Companero-Extra-Anejo-Panama-54-0-7l.html

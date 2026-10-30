@@ -81,7 +81,7 @@ function canonical(s){
   return 'custom:'+n.replace(/\s+/g,'_');
 }
 
-const PRODUCT_MATCHES=PRODUCT_BRANDS.map(x=>({...x,norm:normalize(x.name)})).sort((a,b)=>b.norm.length-a.norm.length);
+const PRODUCT_MATCHES=PRODUCT_BRANDS.flatMap(x=>[x.name,...(x.aliases||[])].map(term=>({...x,norm:normalize(term)}))).sort((a,b)=>b.norm.length-a.norm.length);
 function phraseMatches(haystack,needle){return haystack===needle||haystack.startsWith(needle+' ')||haystack.endsWith(' '+needle)||haystack.includes(' '+needle+' ');}
 function identifyProduct(name){
  const n=normalize(name);
