@@ -136,6 +136,24 @@ function decodeOnlineProducts(body,query){
  }
  return rows.sort((a,b)=>(a.key?0:1)-(b.key?0:1)||a.rank-b.rank||a.name.localeCompare(b.name,'pl')).slice(0,10);
 }
+// Publiczny fallback: Wikidata Action API obsługuje anonimowy dostęp CORS (origin=*).
+// Wynik musi mieć kategorię rozpoznawalną z opisu; nie zgadujemy.
+async function searchWikidataBeverages(query,signal){
+ const u=new URL('https://www.wikidata.org/w/api.php');
+ for(const [k,v] of Object.entries({action:'wbsearchentities',search:query,language:'en',limit:'10',format:'json',origin:'*'}))u.searchParams.set(k,v);
+ const resp=await fetch(u.toString(),{mode:'cors',signal,headers:{Accept:'application/json'}});
+ if(!resp.ok)throw Error('Wikidata HTTP '+resp.status);
+ const data=await resp.json(),list=[],known=new Set();
+ for(const x of Array.isArray(data.search)?data.search:[]){
+  const label=productText(x.label,120),desc=productText(x.description,160);
+  if(!label||!Number.isFinite(productLocalScore(query,label)))continue;
+  const kind=classifyExternalProduct(label,desc);
+  if(!kind.key||!INDEX.has(kind.key)||known.has(normalize(label)))continue;
+  known.add(normalize(label));
+  list.push({id:'wd:'+productText(x.id,32),name:label,key:kind.key,confidence:'description',source:'Wikidata',description:desc,rank:productLocalScore(query,label)});
+ }
+ return list.slice(0,6);
+}
 function currentOnlineCandidates(query){
  return normalize(query)===normalize(PRODUCT_SEARCH.query)&&PRODUCT_SEARCH.status==='ready'?PRODUCT_SEARCH.items:[];
 }
@@ -152,7 +170,7 @@ function productSuggestionMarkup(query){
  }
  if(extra.length){
    lines.push('<div class="product-suggest-head">Znalezione w internecie</div>');
-   lines.push(...extra.map(x=>'<button type="button" class="product-option" data-action="choose-online-product" data-id="'+esc(x.id)+'"><span><b>'+esc(x.name)+'</b><small>'+esc(x.key?iName(x.key):'Typ do potwierdzenia')+'</small></span><em>Open Food Facts</em></button>'));
+   lines.push(...extra.map(x=>'<button type="button" class="product-option" data-action="choose-online-product" data-id="'+esc(x.id)+'"><span><b>'+esc(x.name)+'</b><small>'+esc(x.key?iName(x.key):'Typ do potwierdzenia')+'</small></span><em>'+esc(x.source)+'</em></button>'));
  }
  if(PRODUCT_SEARCH.status==='loading'&&PRODUCT_SEARCH.query===n)lines.push('<div class="product-suggest-info">Szukam dodatkowych produktów w internecie…</div>');
  if(!offline.length&&!extra.length&&PRODUCT_SEARCH.status!=='loading')lines.push('<div class="product-suggest-empty">Brak lokalnych dopasowań. Możesz sprawdzić katalog internetowy lub wybrać rodzaj ręcznie.</div>');
@@ -193,9 +211,9 @@ async function runProductOnlineSearch(q){
  if(!q||q.length<4)return;
  const now=Date.now();
  if(now-PRODUCT_SEARCH.lastAt<6500){
-   PRODUCT_SEARCH.status='waiting';renderProductSuggestions();
-   PRODUCT_SEARCH.timer=setTimeout(()=>runProductOnlineSearch(q),6500-(now-PRODUCT_SEARCH.lastAt));
-   return;
+  PRODUCT_SEARCH.status='waiting';renderProductSuggestions();
+  PRODUCT_SEARCH.timer=setTimeout(()=>runProductOnlineSearch(q),6500-(now-PRODUCT_SEARCH.lastAt));
+  return;
  }
  if(PRODUCT_SEARCH.abort)PRODUCT_SEARCH.abort.abort();
  const ctrl=new AbortController();PRODUCT_SEARCH.abort=ctrl;
@@ -206,24 +224,31 @@ async function runProductOnlineSearch(q){
  url.searchParams.set('page_size','16');
  url.searchParams.set('fields','code,product_name,product_name_pl,product_name_en,brands,categories,categories_tags,categories_tags_en,generic_name');
  url.searchParams.set('langs','pl,en');
- const timer=setTimeout(()=>ctrl.abort(),8500);
+ const timeout=setTimeout(()=>ctrl.abort(),11000);
+ let off=[],wiki=[],available=false,errors=[];
  try{
-   const response=await fetch(url.toString(),{mode:'cors',headers:{Accept:'application/json'},signal:ctrl.signal});
-   if(!response.ok)throw Error('HTTP '+response.status);
-   const data=await response.json();
-   if(seq!==PRODUCT_SEARCH.requestId||normalize(document.getElementById('add-name')?.value)!==q)return;
-   const items=decodeOnlineProducts(data,q);
-   PRODUCT_SEARCH.cache.set(q,items);
-   if(PRODUCT_SEARCH.cache.size>30)PRODUCT_SEARCH.cache.delete(PRODUCT_SEARCH.cache.keys().next().value);
-   PRODUCT_SEARCH.items=items;PRODUCT_SEARCH.status='ready';
+  const resp=await fetch(url.toString(),{mode:'cors',headers:{Accept:'application/json'},signal:ctrl.signal});
+  if(!resp.ok)throw Error('Open Food Facts HTTP '+resp.status);
+  off=decodeOnlineProducts(await resp.json(),q);available=true;
+ }catch(error){errors.push(error);}
+ if(!off.length&&!ctrl.signal.aborted){
+  try{wiki=await searchWikidataBeverages(q,ctrl.signal);available=true;}
+  catch(error){errors.push(error);}
+ }
+ try{
+  if(seq!==PRODUCT_SEARCH.requestId||normalize(document.getElementById('add-name')?.value)!==q)return;
+  if(!available&&errors.length)throw errors[0];
+  const items=[...off,...wiki];
+  PRODUCT_SEARCH.cache.set(q,items);
+  if(PRODUCT_SEARCH.cache.size>30)PRODUCT_SEARCH.cache.delete(PRODUCT_SEARCH.cache.keys().next().value);
+  PRODUCT_SEARCH.items=items;PRODUCT_SEARCH.status='ready';
  }catch(error){
-   if(seq!==PRODUCT_SEARCH.requestId||error.name==='AbortError'&&normalize(document.getElementById('add-name')?.value)!==q)return;
-   PRODUCT_SEARCH.items=[];PRODUCT_SEARCH.status='error';
-   console.warn('My Bar — katalog produktów online:',error);
+  PRODUCT_SEARCH.items=[];PRODUCT_SEARCH.status='error';
+  console.warn('My Bar — wyszukiwanie produktów online:',error);
  }finally{
-   clearTimeout(timer);
-   if(PRODUCT_SEARCH.abort===ctrl)PRODUCT_SEARCH.abort=null;
-   if(seq===PRODUCT_SEARCH.requestId)renderProductSuggestions();
+  clearTimeout(timeout);
+  if(PRODUCT_SEARCH.abort===ctrl)PRODUCT_SEARCH.abort=null;
+  if(seq===PRODUCT_SEARCH.requestId)renderProductSuggestions();
  }
 }
 function selectedOnlineProduct(id){return PRODUCT_SEARCH.items.find(x=>x.id===id)||null;}
