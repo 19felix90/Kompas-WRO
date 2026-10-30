@@ -80,10 +80,55 @@ function canonical(s){
   }
   return 'custom:'+n.replace(/\s+/g,'_');
 }
+
+const PRODUCT_MATCHES=PRODUCT_BRANDS.map(x=>({...x,norm:normalize(x.name)})).sort((a,b)=>b.norm.length-a.norm.length);
+function phraseMatches(haystack,needle){return haystack===needle||haystack.startsWith(needle+' ')||haystack.endsWith(' '+needle)||haystack.includes(' '+needle+' ');}
+function identifyProduct(name){
+ const n=normalize(name);
+ if(!n)return {key:'',status:'empty'};
+ const learned=state.brandOverrides?.[n];
+ if(learned&&(INDEX.has(learned)||learned.startsWith('custom:')))return {key:learned,status:'remembered'};
+ const branded=PRODUCT_MATCHES.find(x=>phraseMatches(n,x.norm));
+ if(branded)return {key:branded.key,status:'brand',matched:branded.name};
+ const ambiguous=AMBIGUOUS_BRANDS.find(([brand])=>phraseMatches(n,normalize(brand)));
+ if(ambiguous)return {key:'',status:'ambiguous',hint:ambiguous[1]};
+ const key=canonical(name);
+ return key.startsWith('custom:')?{key:'',status:'unknown'}:{key,status:'generic'};
+}
+function ingredientOptions(selected=''){
+ const choice=INDEX.has(selected)?selected:String(selected).startsWith('custom:')?'custom':selected;
+ return '<option value="" '+(!choice?'selected':'')+' disabled>Wybierz rodzaj produktu</option>'+
+ Object.entries(TYPES).map(([type,title])=>'<optgroup label="'+esc(title)+'">'+INGREDIENTS.filter(x=>x.type===type).map(x=>'<option value="'+esc(x.id)+'" '+(choice===x.id?'selected':'')+'>'+esc(x.name)+'</option>').join('')+'</optgroup>').join('')+
+ '<option value="custom" '+(choice==='custom'?'selected':'')+'>Inny produkt — bez dopasowania</option>';
+}
+function updateProductIdentification(){
+ const name=document.getElementById('add-name'),select=document.getElementById('ingredient-type'),box=document.getElementById('product-match');
+ if(!name||!select||!box)return;
+ const result=identifyProduct(name.value);
+ if(!ui.productSelectionManual){
+   select.value=result.key?(INDEX.has(result.key)?result.key:'custom'):'';
+   ui.selectedIngredient=result.key||'';
+ }
+ let msg='',type='waiting';
+ if(ui.productSelectionManual&&select.value){
+   msg='Wybrano ręcznie: <b>'+esc(select.value==='custom'?'Inny / własny produkt':iName(select.value))+'</b><small>Zapamiętamy tę kategorię dla podanej nazwy.</small>';type='matched';
+ }else if(result.key&&!result.key.startsWith('custom:')){
+   msg='Rozpoznano: <b>'+esc(iName(result.key))+'</b><small>'+(result.status==='brand'?'Na podstawie marki i wariantu.':'Na podstawie nazwy składnika.')+' Możesz zmienić kategorię poniżej.</small>';type='matched';
+ }else if(result.status==='remembered'){
+   msg='Zapamiętano: <b>Inny / własny produkt</b><small>Nie zastępuje automatycznie składników z przepisów.</small>';type='matched';
+ }else if(result.status==='ambiguous'){
+   msg='Marka ma różne warianty.<small>'+esc(result.hint)+'</small>';type='uncertain';
+ }else if(result.status==='unknown'){
+   msg='Nie rozpoznano produktu.<small>Wybierz rodzaj ręcznie, aby poprawnie dopasowywać koktajle.</small>';type='uncertain';
+ }else msg='Podaj markę i wariant, np. <b>Martini Rosso</b> lub <b>Havana Club 3 Años</b>.';
+ box.className='product-match '+type;
+ box.innerHTML='<span class="product-match-icon">'+ico(type==='matched'?'check':type==='uncertain'?'alert':'sparkle','sm')+'</span><span>'+msg+'</span>';
+}
+
 function iName(k,fallback=''){return INDEX.get(k)?.name||fallback||k.replace(/^custom:/,'').replace(/_/g,' ');}
 function iEn(k){return INDEX.get(k)?.en||iName(k).replace(/\s+/g,' ');}
 function iType(k){return INDEX.get(k)?.type||'other';}
-function blankState(){return {stock:[],favorites:[],cart:[],history:[],demo:false};}
+function blankState(){return {stock:[],favorites:[],cart:[],history:[],brandOverrides:{},demo:false};}
 function loadState(){
   try{
     const raw=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
@@ -91,16 +136,16 @@ function loadState(){
       stock:raw.stock.filter(x=>x&&typeof x.key==='string'&&typeof x.name==='string').slice(0,500).map(x=>({...x,ml:Number.isFinite(Number(x.ml))&&x.ml!==null&&x.ml!==''?Math.max(0,Number(x.ml)):null})),
       favorites:Array.isArray(raw.favorites)?raw.favorites.filter(x=>typeof x==='string'):[],
       cart:Array.isArray(raw.cart)?raw.cart.filter(x=>x&&typeof x.key==='string').slice(0,200):[],
-      history:Array.isArray(raw.history)?raw.history.slice(-100):[],demo:!!raw.demo};
+      history:Array.isArray(raw.history)?raw.history.slice(-100):[],brandOverrides:raw.brandOverrides&&typeof raw.brandOverrides==='object'&&!Array.isArray(raw.brandOverrides)?Object.fromEntries(Object.entries(raw.brandOverrides).filter(([n,k])=>n.length<=120&&typeof k==='string'&&(INDEX.has(k)||k.startsWith('custom:'))).slice(0,500)):{},demo:!!raw.demo};
   }catch(e){console.warn('Nie można odczytać danych',e);}
   return {stock:DEMO_STOCK.map(x=>({...x})),favorites:[],cart:[],history:[],demo:true};
 }
 let state=loadState();
-let ui={page:'home',filter:'all',base:'any',taste:'any',query:'',sort:'fit',modal:null,servings:1,selectedIngredient:'',onlineStatus:'idle',onlineError:'',onlineSearchQuery:'',onlineSearchResults:[],onlineSearchLoading:false,onlineSynced:false};
+let ui={page:'home',filter:'all',base:'any',taste:'any',query:'',sort:'fit',modal:null,servings:1,selectedIngredient:'',productSelectionManual:false,onlineStatus:'idle',onlineError:'',onlineSearchQuery:'',onlineSearchResults:[],onlineSearchLoading:false,onlineSynced:false};
 const ONLINE=new Map();
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){toast('Nie udało się zapisać danych w tej przeglądarce');}}
 function freshId(){return 'p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);}
-function getAlternativeKeys(k){return ({rum:['rum','white_rum','dark_rum'],whiskey:['whiskey','bourbon','rye_whiskey','irish_whiskey'],lime_juice:['lime_juice','lime'],lemon_juice:['lemon_juice','lemon'],orange_juice:['orange_juice','orange'],honey:['honey'],prosecco:['prosecco']})[k]||[k];}
+function getAlternativeKeys(k){return ({rum:['rum','white_rum','dark_rum','spiced_rum'],whiskey:['whiskey','bourbon','rye_whiskey','irish_whiskey'],lime_juice:['lime_juice','lime'],lemon_juice:['lemon_juice','lemon'],orange_juice:['orange_juice','orange'],honey:['honey'],prosecco:['prosecco']})[k]||[k];}
 function availableAmount(ing){
   const options=getAlternativeKeys(ing.id);
   const items=state.stock.filter(s=>options.includes(s.key));
@@ -172,12 +217,12 @@ function cardHtml(r){
 }
 function shellPage(){
  const titleMap={home:'Odkrywaj koktajle',cocktails:'Katalog koktajli',bar:'Twój barek',shopping:'Lista zakupów',favorites:'Twoje ulubione'};
- return `<div class="app-shell"><aside class="sidebar"><a href="#start" class="brand" data-action="navigate" data-page="home"><span class="brand-icon">${ico('glass','xl')}</span><span class="brand-copy"><strong>MY BAR</strong><span>TWÓJ PRYWATNY BARMAN</span></span></a><div class="side-caption">Twój koktajlowy świat</div><nav class="nav-stack" aria-label="Menu główne">${TABS.map(([page,label,ic])=>`<button class="nav-item ${ui.page===page?'active':''}" data-action="navigate" data-page="${page}">${ico(ic)}${label}</button>`).join('')}</nav><div class="sidebar-bottom"><div class="mini-panel"><span class="eyebrow">${ico('sparkle','sm')} POMYSŁ NA DZIŚ</span><strong>Co wymieszać z tego, co masz?</strong><p>Sprawdź, jakie nowe przepisy czekają na odkrycie.</p><button class="btn small soft" data-action="sync-online">${ico('cloud','sm')} Odkryj online</button></div><button class="nav-item" data-action="open-settings">${ico('settings')} Ustawienia i kopia danych</button><div class="sidebar-footer">MY BAR • wersja 1.0</div></div></aside>
+ return `<div class="app-shell"><aside class="sidebar"><a href="#start" class="brand" data-action="navigate" data-page="home"><span class="brand-icon">${ico('glass','xl')}</span><span class="brand-copy"><strong>MY BAR</strong><span>TWÓJ PRYWATNY BARMAN</span></span></a><div class="side-caption">Twój koktajlowy świat</div><nav class="nav-stack" aria-label="Menu główne">${TABS.map(([page,label,ic])=>`<button class="nav-item ${ui.page===page?'active':''}" data-action="navigate" data-page="${page}">${ico(ic)}${label}</button>`).join('')}</nav><div class="sidebar-bottom"><div class="mini-panel"><span class="eyebrow">${ico('sparkle','sm')} POMYSŁ NA DZIŚ</span><strong>Co wymieszać z tego, co masz?</strong><p>Sprawdź, jakie nowe przepisy czekają na odkrycie.</p><button class="btn small soft" data-action="sync-online">${ico('cloud','sm')} Odkryj online</button></div><button class="nav-item" data-action="open-settings">${ico('settings')} Ustawienia i kopia danych</button><div class="sidebar-footer">MY BAR • wersja 1.1</div></div></aside>
  <div class="main"><header class="topbar"><div class="topbar-l"><span class="crumb">MY BAR / ${esc(titleMap[ui.page])}</span><strong>${esc(titleMap[ui.page])}</strong></div><div class="topbar-r"><div class="online-indicator ${navigator.onLine?'':'off'}"><i class="dot"></i>${navigator.onLine?'Tryb online':'Tryb offline'}</div><button class="btn small ghost" data-action="open-add">${ico('plus','sm')} Dodaj do barku</button><button class="icon-btn" title="Ustawienia" aria-label="Ustawienia" data-action="open-settings">${ico('settings')}</button></div></header>
  <main class="content" id="main-content">${pageHtml()}</main>${footer()}</div></div>
  <nav class="mobile-nav" aria-label="Nawigacja dolna">${TABS.map(([page,label,ic])=>`<button class="mobile-tab ${ui.page===page?'active':''}" data-action="navigate" data-page="${page}">${ico(ic)}<span>${label}</span></button>`).join('')}</nav>`;
 }
-function footer(){return `<footer class="footer"><span>MY BAR 1.0 • Twoje zapasy są zapisywane w tej przeglądarce.</span><span>Przepisy online: <a href="https://24cocktails.com/developers.html" target="_blank" rel="noopener noreferrer">24cocktails.com</a> • Korzystaj odpowiedzialnie (18+).</span></footer>`;}
+function footer(){return `<footer class="footer"><span>MY BAR 1.1 • Twoje zapasy są zapisywane w tej przeglądarce.</span><span>Przepisy online: <a href="https://24cocktails.com/developers.html" target="_blank" rel="noopener noreferrer">24cocktails.com</a> • Korzystaj odpowiedzialnie (18+).</span></footer>`;}
 function demoBanner(){return state.demo?`<div class="demo-banner">${ico('info','sm')} <span>Wyświetlasz <b>przykładowy barek</b>. Możesz testować aplikację lub zacząć z własną listą.</span><button data-action="clear-demo">Wyczyść przykład</button></div>`:'';}
 function pageHtml(){return ui.page==='home'?homePage():ui.page==='cocktails'?cocktailsPage():ui.page==='bar'?barPage():ui.page==='shopping'?shoppingPage():favoritesPage();}
 function homePage(){
@@ -223,7 +268,7 @@ function cocktailsPage(){
 }
 function barPage(){
  const grouped=Object.keys(TYPES).map(type=>[type,state.stock.filter(x=>iType(x.key)===type)]).filter(([_,items])=>items.length);
- return `${demoBanner()}<div class="page-intro"><div><div class="eyebrow">TWOJE ZAPASY</div><h1>Mój barek</h1><p class="subtle">Dodaj butelki, miksery i świeże dodatki. Marki rozpoznajemy automatycznie.</p></div><div class="flex wrap"><button class="btn ghost" data-action="export-data">${ico('download','sm')} Kopia danych</button><button class="btn primary" data-action="open-add">${ico('plus','sm')} Dodaj produkt</button></div></div>
+ return `${demoBanner()}<div class="page-intro"><div><div class="eyebrow">TWOJE ZAPASY</div><h1>Mój barek</h1><p class="subtle">Dodaj butelki, miksery i świeże dodatki. Marki i warianty rozpoznajemy automatycznie, z możliwością poprawienia typu.</p></div><div class="flex wrap"><button class="btn ghost" data-action="export-data">${ico('download','sm')} Kopia danych</button><button class="btn primary" data-action="open-add">${ico('plus','sm')} Dodaj produkt</button></div></div>
  ${state.stock.length?`<div class="panel panel-pad"><div class="flex between wrap"><div><b style="font-size:18px">${state.stock.length} produktów</b><p class="subtle" style="margin:3px 0 0">Kliknij ołówek, aby zmienić nazwę lub stan butelki.</p></div><span class="pill good">${ico('shield','sm')} Zapis lokalny</span></div></div>${grouped.map(([type,items])=>`<h3 class="group-title">${TYPES[type]} <span class="muted tiny">(${items.length})</span></h3><div class="stock-grid">${items.map(stockCard).join('')}</div>`).join('')}`:emptyContent('Pusty barek','Zacznij od dodania ginu, rumu, wódki lub dowolnego alkoholu, który masz w domu.','open-add','Dodaj pierwszy produkt')}
  <div class="cta-panel"><div class="flex"><span class="icon-wrap">${ico('info','lg')}</span><div><h3>Nie musisz liczyć mililitrów</h3><p>Przy dodawaniu możesz wybrać „Jest w barku” zamiast dokładnego stanu. Rozliczanie ilości jest opcjonalne.</p></div></div><button class="btn ghost small" data-action="open-add">Dodaj składnik</button></div>`;
 }
@@ -261,9 +306,9 @@ function renderModal(){
    const original=m.kind==='edit'?state.stock.find(x=>x.id===m.id):null;
    if(m.kind==='edit'&&!original){ui.modal=null;return renderModal();}
    const prefill=m.prefill||'',selected=original?.key||prefill||'';
-   root.innerHTML=`<div class="overlay center" data-action="overlay"><div class="dialog compact" role="dialog" aria-modal="true" aria-labelledby="add-title"><div class="dialog-head"><strong id="add-title">${original?'Edytuj produkt':'Dodaj do swojego barku'}</strong><button class="icon-btn" aria-label="Zamknij" data-action="close-modal">${ico('close')}</button></div><form id="stock-form" class="dialog-content" style="padding-top:4px"><label class="form-label" for="add-name">Nazwa alkoholu lub składnika</label><input class="form-input" id="add-name" name="name" placeholder="np. Hendrick’s Gin, Aperol, sok z limonki" value="${esc(original?.name||iName(selected,selected?'':''))}" maxlength="120" required autocomplete="off"><p class="form-note">Rozpoznajemy znane marki i dopasowujemy je do rodzajów składników.</p><div class="suggestions" id="ingredient-suggestions">${ingredientSuggestions(original?.name||iName(selected,selected?'':''))}</div>
+   root.innerHTML=`<div class="overlay center" data-action="overlay"><div class="dialog compact" role="dialog" aria-modal="true" aria-labelledby="add-title"><div class="dialog-head"><strong id="add-title">${original?'Edytuj produkt':'Dodaj do swojego barku'}</strong><button class="icon-btn" aria-label="Zamknij" data-action="close-modal">${ico('close')}</button></div><form id="stock-form" class="dialog-content" style="padding-top:4px"><label class="form-label" for="add-name">Nazwa alkoholu lub składnika</label><input class="form-input" id="add-name" name="name" placeholder="np. Hendrick’s Gin, Aperol, sok z limonki" value="${esc(original?.name||iName(selected,selected?'':''))}" maxlength="120" required autocomplete="off"><p class="form-note">Wpisz dokładną markę i wariant. Rozpoznaną kategorię możesz poprawić.</p><div id="product-match" class="product-match waiting" role="status" aria-live="polite"></div><label class="form-label" for="ingredient-type">Rozpoznany rodzaj produktu</label><select class="form-input product-select" id="ingredient-type" name="ingredientKey" required>${ingredientOptions(original?.key||selected)}</select><div class="suggestions" id="ingredient-suggestions">${ingredientSuggestions(original?.name||iName(selected,selected?'':''))}</div>
  <label class="switch-row"><input id="track-quantity" name="track" type="checkbox" ${original?.ml!==null&&original?.ml!==undefined?'checked':''}><span>Chcę śledzić dokładny stan butelki (w ml)</span></label><div id="quantity-wrap" style="${original?.ml!==null&&original?.ml!==undefined?'':'display:none'}"><label class="form-label" for="add-quantity">Ilość dostępna w ml</label><input class="form-input" id="add-quantity" name="quantity" type="number" min="0" max="100000" step="1" placeholder="np. 500" value="${original?.ml??''}"><p class="form-note">Śledzenie ilości najlepiej sprawdza się przy napojach. Owoce i dekoracje traktujemy jako dostępne.</p></div><div class="form-actions" style="justify-content:${original?'space-between':'flex-end'}">${original?`<button type="button" class="danger-link" data-action="delete-stock" data-id="${esc(original.id)}">${ico('trash','sm')} Usuń produkt</button>`:''}<div class="flex"><button type="button" class="btn ghost" data-action="close-modal">Anuluj</button><button type="submit" class="btn primary">${ico('check','sm')} ${original?'Zapisz zmiany':'Dodaj do barku'}</button></div></div></form></div></div>`;
-   ui.selectedIngredient=original?.key||prefill||'';
+   ui.selectedIngredient=original?.key||prefill||'';ui.productSelectionManual=!!original;updateProductIdentification();
  }else if(m.kind==='settings'){
    root.innerHTML=`<div class="overlay center" data-action="overlay"><div class="dialog compact" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div class="dialog-head"><strong id="settings-title">Ustawienia My Bar</strong><button class="icon-btn" aria-label="Zamknij" data-action="close-modal">${ico('close')}</button></div><div class="dialog-content"><h3>Twoje dane</h3><p class="side-note">Zapasy, ulubione i zakupy są przechowywane lokalnie w tej przeglądarce. Nie ma jeszcze synchronizacji między telefonem a komputerem.</p><div class="flex wrap"><button class="btn ghost" data-action="export-data">${ico('download','sm')} Eksportuj kopię</button><label class="btn ghost" for="import-file">${ico('upload','sm')} Importuj kopię</label><input id="import-file" type="file" accept="application/json,.json" hidden></div><hr style="border:0;border-top:1px solid #3a444d;margin:23px 0"><h3>Przepisy z internetu</h3><p class="side-note">Korzystamy z API 24cocktails.com. Po kliknięciu „Dobierz z internetu” wysyłamy wyłącznie nazwy posiadanych składników, bez informacji o ilościach. Dostawca wymaga wskazania źródła przepisu.</p><a class="link small" target="_blank" rel="noopener noreferrer" href="https://24cocktails.com/terms.html">Warunki korzystania z API ${ico('external','sm')}</a><hr style="border:0;border-top:1px solid #3a444d;margin:23px 0"><h3>Wyczyść bark</h3><p class="side-note">Możesz rozpocząć od nowa. Przed czyszczeniem warto zrobić kopię danych.</p><button class="btn ghost" data-action="open-reset">${ico('trash','sm')} Wyczyść wszystkie dane</button></div></div></div>`;
  }else if(m.kind==='reset'){
@@ -272,9 +317,12 @@ function renderModal(){
 }
 function ingredientSuggestions(q){
  const n=normalize(q);
- const score=x=>normalize(x.name)===n?0:normalize(x.name).startsWith(n)?1:2;
- const items=INGREDIENTS.filter(x=>!n||normalize([x.name,x.en,...x.aliases].join(' ')).includes(n)).sort((a,b)=>score(a)-score(b)).slice(0,12);
- return items.map(x=>`<button type="button" class="suggestion" data-action="choose-ingredient" data-id="${esc(x.id)}">${esc(x.name)}</button>`).join('')||'<span class="tiny muted">Nie ma w katalogu? Wpisz własną nazwę i dodaj.</span>';
+ if(n.length<2)return '<span class="tiny muted">Wpisz minimum 2 znaki, aby zobaczyć propozycje.</span>';
+ const brands=PRODUCT_MATCHES.filter(x=>x.norm.startsWith(n)||x.norm.includes(' '+n)).slice(0,6);
+ const types=INGREDIENTS.filter(x=>normalize([x.name,x.en,...x.aliases].join(' ')).includes(n)).slice(0,5);
+ return [...brands.map(x=>'<button type="button" class="suggestion brand-suggestion" data-action="choose-brand" data-name="'+esc(x.name)+'">'+esc(x.name)+' <span>· '+esc(iName(x.key))+'</span></button>'),
+  ...types.map(x=>'<button type="button" class="suggestion" data-action="choose-ingredient" data-id="'+esc(x.id)+'">Rodzaj: '+esc(x.name)+'</button>')].join('')||
+  '<span class="tiny muted">Nie ma marki w słowniku? Wybierz kategorię z listy powyżej.</span>';
 }
 function toast(message){const node=document.getElementById('toast');node.innerHTML=`<div class="toast-item" role="status">${esc(message)}</div>`;clearTimeout(toast.timer);toast.timer=setTimeout(()=>node.innerHTML='',3300);}
 function addToCart(key,name=''){
@@ -285,16 +333,18 @@ function addToCart(key,name=''){
 }
 function saveStock(e){e.preventDefault();
  const form=e.target,name=form.elements.name.value.trim();if(!name){toast('Wpisz nazwę produktu');return;}
- const guessed=canonical(name),pref=ui.selectedIngredient;
- const canonicalKey=pref&&(!normalize(iName(pref))||normalize(name)===normalize(iName(pref))||normalize(name)===normalize(INDEX.get(pref)?.en)||guessed===pref)?pref:guessed;
- const track=form.elements.track.checked;
- const amount=Number(form.elements.quantity.value);
+ const chosen=form.elements.ingredientKey.value;
+ if(!chosen){toast('Wybierz rodzaj produktu lub wpisz dokładniejszy wariant');form.elements.ingredientKey.focus();return;}
+ const key=chosen==='custom'?'custom:'+normalize(name).replace(/\s+/g,'_'):chosen;
+ const track=form.elements.track.checked,amount=Number(form.elements.quantity.value);
  if(track&&(!form.elements.quantity.value.trim()||!Number.isFinite(amount)||amount<0)){toast('Podaj prawidłową ilość w ml');return;}
  const qty=track?Math.floor(amount):null;
  const item=state.stock.find(x=>x.id===ui.modal?.id);
- if(ui.modal?.kind==='edit'&&item){item.name=name;item.key=canonicalKey;item.ml=qty;}
- else {state.stock.push({id:freshId(),key:canonicalKey,name,ml:qty});}
- state.demo=false;state.cart=state.cart.filter(x=>x.key!==canonicalKey);saveState();ui.modal=null;refresh();toast(item?'Produkt zaktualizowany':'Dodano do barku');
+ if(ui.modal?.kind==='edit'&&item){item.name=name;item.key=key;item.ml=qty;}
+ else state.stock.push({id:freshId(),key,name,ml:qty});
+ if(ui.productSelectionManual)state.brandOverrides[normalize(name)]=key;
+ state.demo=false;state.cart=state.cart.filter(x=>x.key!==key);saveState();
+ ui.modal=null;refresh();toast(item?'Produkt zaktualizowany':'Dodano do barku');
 }
 function subtractInventory(recipe,servings){
  for(const ing of recipe.ingredients){
@@ -319,7 +369,7 @@ async function importJSON(file){
  if(file.size>5e6){toast('Plik jest zbyt duży');return;}
  try{
    const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed.stock)||!Array.isArray(parsed.favorites))throw Error('format');
-   state={stock:parsed.stock.filter(x=>x&&typeof x.key==='string'&&typeof x.name==='string').slice(0,500).map(x=>({id:String(x.id||freshId()),key:x.key,name:x.name.slice(0,120),ml:x.ml===null||x.ml===undefined?null:Number.isFinite(Number(x.ml))&&Number(x.ml)>=0?Number(x.ml):null})),favorites:parsed.favorites.filter(x=>typeof x==='string').slice(0,500),cart:Array.isArray(parsed.cart)?parsed.cart.filter(x=>x&&typeof x.key==='string').slice(0,200):[],history:Array.isArray(parsed.history)?parsed.history.slice(-100):[],demo:false};
+   state={stock:parsed.stock.filter(x=>x&&typeof x.key==='string'&&typeof x.name==='string').slice(0,500).map(x=>({id:String(x.id||freshId()),key:x.key,name:x.name.slice(0,120),ml:x.ml===null||x.ml===undefined?null:Number.isFinite(Number(x.ml))&&Number(x.ml)>=0?Number(x.ml):null})),favorites:parsed.favorites.filter(x=>typeof x==='string').slice(0,500),cart:Array.isArray(parsed.cart)?parsed.cart.filter(x=>x&&typeof x.key==='string').slice(0,200):[],history:Array.isArray(parsed.history)?parsed.history.slice(-100):[],brandOverrides:parsed.brandOverrides&&typeof parsed.brandOverrides==='object'&&!Array.isArray(parsed.brandOverrides)?Object.fromEntries(Object.entries(parsed.brandOverrides).filter(([n,k])=>n.length<=120&&typeof k==='string'&&(INDEX.has(k)||k.startsWith('custom:'))).slice(0,500)):{},demo:false};
    saveState();ui.modal=null;refresh();toast('Kopia danych została zaimportowana');
  }catch(e){toast('To nie jest poprawna kopia danych My Bar');}
 }
@@ -436,7 +486,18 @@ document.addEventListener('click',async e=>{
  if(action==='edit-stock'){ui.modal={kind:'edit',id};renderModal();return;}
  if(action==='delete-stock'){state.stock=state.stock.filter(x=>x.id!==id);state.demo=false;saveState();ui.modal=null;refresh();toast('Usunięto produkt');return;}
  if(action==='choose-ingredient'){
-   ui.selectedIngredient=id;const n=document.getElementById('add-name');if(n){n.value=iName(id);document.getElementById('ingredient-suggestions').innerHTML=ingredientSuggestions(n.value);n.focus();}return;
+  const n=document.getElementById('add-name'),sel=document.getElementById('ingredient-type');
+  if(n&&!n.value.trim())n.value=iName(id);
+  if(sel)sel.value=id;
+  ui.selectedIngredient=id;ui.productSelectionManual=true;updateProductIdentification();
+  if(n){document.getElementById('ingredient-suggestions').innerHTML=ingredientSuggestions(n.value);n.focus();}
+  return;
+ }
+ if(action==='choose-brand'){
+  const n=document.getElementById('add-name');if(!n)return;
+  n.value=el.dataset.name||'';ui.productSelectionManual=false;ui.selectedIngredient='';
+  document.getElementById('ingredient-suggestions').innerHTML=ingredientSuggestions(n.value);
+  updateProductIdentification();n.focus();return;
  }
  if(action==='clear-demo'){state=blankState();saveState();refresh();toast('Teraz możesz dodawać własne zapasy');return;}
  if(action==='open-settings'){ui.modal={kind:'settings'};renderModal();return;}
@@ -479,10 +540,14 @@ document.addEventListener('input',e=>{
    ui.query=e.target.value;refreshResults();return;
  }
  if(e.target.id==='add-name'){
-   ui.selectedIngredient='';const dest=document.getElementById('ingredient-suggestions');if(dest)dest.innerHTML=ingredientSuggestions(e.target.value);return;
+  ui.selectedIngredient='';ui.productSelectionManual=false;
+  const dest=document.getElementById('ingredient-suggestions');if(dest)dest.innerHTML=ingredientSuggestions(e.target.value);
+  updateProductIdentification();return;
  }
 });
+});
 document.addEventListener('change',e=>{
+ if(e.target.id==='ingredient-type'){ui.productSelectionManual=true;ui.selectedIngredient=e.target.value;updateProductIdentification();}
  if(e.target.id==='base-filter'){ui.base=e.target.value;refreshResults();}
  if(e.target.id==='taste-filter'){ui.taste=e.target.value;refreshResults();}
  if(e.target.id==='sort-filter'){ui.sort=e.target.value;refreshResults();}
