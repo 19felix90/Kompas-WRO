@@ -54,7 +54,7 @@ function productLocalScore(query,name){
 function localProductCandidates(query){
  const q=normalize(query);if(q.length<2)return [];
  const rows=[],used=new Set();
- const priority={'botucal reserva exclusiva':-17,'botucal planas':-16,'botucal mantuano':-15,'diplomatico reserva exclusiva':-9,'diplomatico planas':-8};
+ const priority={'botucal reserva exclusiva':-17,'botucal planas':-16,'botucal mantuano':-15,'diplomatico reserva exclusiva':-9,'diplomatico planas':-8,'amarula original cream':-25,'amarula ethiopian coffee cream':-9,'amarula vanilla spice cream':-7,'amarula african gin':-5,'ron companero extra anejo panama 54':-25,'ron companero gran reserva jamaica trinidad':-10,'ron companero elixir orange':-5};
  const push=(name,key,source,rank)=>{
    const token=normalize(name);
    if(!key||!token||used.has(token+'|'+key))return;
